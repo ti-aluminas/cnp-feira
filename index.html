@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Produção — Feira</title>
+<title>Feira</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -197,6 +197,18 @@ tr:hover .modelo-cell{background:#211d24;}
 /* ---------- ANALYSIS VIEW ---------- */
 .analise-grid{display:grid;grid-template-columns:1fr;gap:24px;}
 @media(min-width:900px){.analise-grid{grid-template-columns:1.3fr 1fr;}}
+
+.alert-panel{border-color:var(--lancar);background:rgba(217,160,90,.06);margin-bottom:24px;}
+.alert-panel h3{color:var(--lancar);}
+.alert-item{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.alert-item:last-child{border-bottom:none;}
+.alert-name{font-weight:500;}
+.alert-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.alert-emb{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--lancar);color:var(--lancar);}
+.alert-gap{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--falta);color:var(--falta);}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
 .panel h3{
   font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;margin:0 0 4px;color:var(--text);
@@ -307,6 +319,12 @@ tr:hover .modelo-cell{background:#211d24;}
 
   <!-- ================= ANÁLISE ================= -->
   <div class="view" id="view-analise">
+    <div class="panel alert-panel" id="embalagemAlertPanel">
+      <h3>⚠ Embalagem à frente dos dados</h3>
+      <div class="sub">Embalagem já marcada como OK ou LANÇAR — o produto provavelmente já tá pronto, mas outros setores aqui embaixo ainda não foram atualizados. Vale conferir.</div>
+      <div id="embalagemAlertList"></div>
+    </div>
+
     <div class="analise-grid">
       <div class="panel">
         <h3>Quase prontos</h3>
@@ -664,6 +682,27 @@ function buildWaiting(){
 
 /* ---------------- ANÁLISE: render ---------------- */
 function buildAnalise(){
+  // embalagem à frente dos outros setores
+  const embList = document.getElementById('embalagemAlertList');
+  const embAlerta = rows.filter(r => r.EMBALAGEM === 'LANCADO' || r.EMBALAGEM === 'LANCAR');
+  embList.innerHTML = '';
+  if(embAlerta.length===0){
+    embList.innerHTML = '<div class="empty-mini">Nenhum caso agora — embalagem está alinhada com o resto.</div>';
+  } else {
+    embAlerta.forEach(r=>{
+      const gaps = SECTORS.filter(s => s!=='EMBALAGEM' && r[s]==='FALTA');
+      const item = document.createElement('div');
+      item.className = 'alert-item';
+      const embLabel = r.EMBALAGEM === 'LANCADO' ? 'Embalagem: OK' : 'Embalagem: LANÇAR';
+      const gapTags = gaps.map(s=>`<span class="alert-gap">${SECTOR_LABELS[s]} falta</span>`).join('');
+      item.innerHTML = `
+        <span class="alert-name">${r.modelo}</span>
+        <span class="alert-tags"><span class="alert-emb">${embLabel}</span>${gapTags}</span>
+      `;
+      embList.appendChild(item);
+    });
+  }
+
   // ranking de setores
   const rankList = document.getElementById('rankList');
   const stats = SECTORS.map(s=>({sector:s, falta: rows.filter(r=>r[s]==='FALTA').length}))
