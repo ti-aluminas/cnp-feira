@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Produção — Feira</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --bg:#161016;
+  --bg-2:#1d1519;
+  --surface:#241a20;
+  --surface-2:#2c1f26;
+  --line:#3a2a32;
+  --bordo:#7A1F2B;
+  --bordo-light:#9c3341;
+  --bordo-glow:rgba(122,31,43,.35);
+  --text:#F2EDE9;
+  --text-dim:#b8a9ae;
+  --text-faint:#7d6d73;
+  --falta:#E5484D;
+  --falta-bg:rgba(229,72,77,.16);
+  --naopassa:#6B6470;
+  --naopassa-bg:rgba(107,100,112,.14);
+  --lancar:#E8A33D;
+  --lancar-bg:rgba(232,163,61,.16);
+  --lancado:#3FB27F;
+  --lancado-bg:rgba(63,178,127,.16);
+  --empty-bg:#2a1e24;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 16px 60px;}
+
+/* ---------- HEADER / LINE SIGNATURE ---------- */
+header{margin-bottom:20px;}
+.eyebrow{
+  font-family:'Space Mono',monospace;
+  font-size:11px;
+  letter-spacing:.18em;
+  color:var(--bordo-light);
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+h1{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;
+  font-size:clamp(28px,5vw,42px);
+  margin:0 0 14px;
+  letter-spacing:.01em;
+  text-transform:uppercase;
+  line-height:1;
+}
+h1 span{color:var(--bordo-light);}
+
+.line-track{
+  display:flex;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:var(--surface);
+  margin-bottom:18px;
+  box-shadow:0 8px 24px -12px rgba(0,0,0,.6);
+}
+.station{
+  flex:1;
+  padding:10px 4px;
+  text-align:center;
+  font-family:'Space Mono',monospace;
+  font-size:10px;
+  letter-spacing:.03em;
+  color:var(--text-faint);
+  border-right:1px solid var(--line);
+  position:relative;
+  cursor:pointer;
+  transition:background .15s;
+  user-select:none;
+}
+.station:last-child{border-right:none;}
+.station:hover{background:var(--surface-2);}
+.station.active{background:var(--bordo-glow);color:var(--text);}
+.station .count{
+  display:block;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  color:var(--falta);
+  line-height:1.1;
+  margin-top:2px;
+}
+.station .count.zero{color:var(--text-faint);opacity:.5;}
+.station .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+
+/* ---------- SUMMARY CARDS ---------- */
+.sync-status{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-bottom:14px;
+}
+.sync-status .dot{
+  width:8px;height:8px;border-radius:50%;background:var(--text-faint);
+  box-shadow:0 0 0 rgba(0,0,0,0);
+}
+.sync-status.ok .dot{background:var(--lancado);box-shadow:0 0 6px var(--lancado);}
+.sync-status.error .dot{background:var(--falta);box-shadow:0 0 6px var(--falta);}
+.sync-status.loading .dot{background:var(--lancar);box-shadow:0 0 6px var(--lancar);animation:pulse 1s infinite;}
+@keyframes pulse{50%{opacity:.3;}}
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:10px;
+  margin-bottom:20px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+}
+.card .n{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;line-height:1;}
+.card .l{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+.card.pend .n{color:var(--falta);}
+.card.ok .n{color:var(--lancado);}
+.card.total .n{color:var(--text);}
+
+/* ---------- CONTROLS ---------- */
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-bottom:14px;
+}
+input[type=text]{
+  background:var(--surface);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:10px 14px;
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  flex:1;
+  min-width:180px;
+}
+input[type=text]:focus{outline:none;border-color:var(--bordo-light);}
+button{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--text);
+  padding:10px 14px;
+  cursor:pointer;
+  transition:background .15s,border-color .15s;
+  white-space:nowrap;
+}
+button:hover{background:var(--surface-2);border-color:var(--bordo-light);}
+button.primary{background:var(--bordo);border-color:var(--bordo);}
+button.primary:hover{background:var(--bordo-light);}
+.chip{
+  font-size:12px;padding:8px 12px;border-radius:20px;
+  background:var(--surface);border:1px solid var(--line);cursor:pointer;color:var(--text-dim);
+}
+.chip.active{background:var(--bordo-glow);border-color:var(--bordo-light);color:var(--text);}
+
+/* ---------- TABLE ---------- */
+.table-scroll{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+}
+table{border-collapse:collapse;width:100%;min-width:1100px;}
+thead th{
+  position:sticky;top:0;z-index:2;
+  background:var(--bordo);
+  color:#fff;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  padding:10px 6px;
+  text-align:center;
+  border-right:1px solid rgba(255,255,255,.12);
+}
+thead th:first-child{
+  text-align:left;padding-left:14px;position:sticky;left:0;z-index:3;min-width:210px;
+}
+tbody td{
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding:0;
+  text-align:center;
+}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+.modelo-cell{
+  position:sticky;left:0;
+  background:var(--surface);
+  text-align:left;
+  padding:9px 10px 9px 14px !important;
+  font-size:13.5px;
+  font-weight:500;
+  min-width:210px;
+  max-width:260px;
+  border-right:1px solid var(--line);
+}
+tr:hover .modelo-cell{background:#2a1e24;}
+.modelo-input{
+  background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;
+  font-size:13.5px;font-weight:500;width:100%;padding:2px 0;
+}
+.modelo-input:focus{outline:none;border-bottom:1px solid var(--bordo-light);}
+.del-row{
+  background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:14px;
+  padding:2px 4px;border-radius:4px;flex-shrink:0;
+}
+.del-row:hover{color:var(--falta);background:var(--falta-bg);}
+.modelo-flex{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+
+.status-cell{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.03em;min-width:90px;}
+.status-ok{color:var(--lancado);}
+.status-pend{color:var(--falta);}
+
+.cell-btn{
+  width:100%;height:44px;
+  border:none;cursor:pointer;
+  font-family:'Space Mono',monospace;
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.02em;
+  color:var(--text-faint);
+  background:var(--empty-bg);
+  position:relative;
+  transition:filter .1s;
+}
+.cell-btn:hover{filter:brightness(1.15);}
+.cell-btn.FALTA{background:var(--falta-bg);color:var(--falta);}
+.cell-btn.NAO_PASSA{background:var(--naopassa-bg);color:var(--naopassa);text-decoration:line-through;}
+.cell-btn.LANCAR{background:var(--lancar-bg);color:var(--lancar);}
+.cell-btn.LANCADO{background:var(--lancado-bg);color:var(--lancado);}
+.cell-clear{
+  position:absolute;top:2px;right:3px;font-size:9px;line-height:1;
+  color:inherit;opacity:.55;
+}
+.cell-clear:hover{opacity:1;}
+
+/* ---------- LEGEND ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 22px;font-size:12px;color:var(--text-dim);}
+.legend .sw{display:inline-flex;align-items:center;gap:6px;}
+.legend .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
+.hint{font-size:12px;color:var(--text-faint);margin-top:8px;}
+
+/* ---------- WAITING LIST ---------- */
+.waiting{margin-top:26px;}
+.waiting h2{
+  font-family:'Barlow Condensed',sans-serif;font-size:20px;text-transform:uppercase;
+  letter-spacing:.03em;color:var(--text-dim);margin:0 0 10px;font-weight:700;
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+}
+.waiting h2 .arrow{transition:transform .15s;font-size:14px;}
+.waiting h2.collapsed .arrow{transform:rotate(-90deg);}
+.waiting-list{display:flex;flex-direction:column;gap:6px;}
+.waiting-list.collapsed{display:none;}
+.waiting-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;font-size:13.5px;
+}
+.waiting-item button{padding:6px 10px;font-size:12px;}
+
+/* ---------- TOAST ---------- */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bordo);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;
+  font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:50;
+  box-shadow:0 8px 24px -8px rgba(0,0,0,.5);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-faint);font-size:14px;}
+
+@media(max-width:640px){
+  .card .n{font-size:24px;}
+  h1{font-size:26px;}
+  .station .lbl{font-size:9px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Aluminas Móveis · PCP</div>
+    <h1>Controle de <span>Produção — Feira</span></h1>
+
+    <div class="sync-status" id="syncStatus"><span class="dot"></span><span id="syncText">conectando...</span></div>
+
+    <div class="line-track" id="lineTrack"></div>
+
+    <div class="summary">
+      <div class="card total"><div class="n" id="cTotal">0</div><div class="l">Modelos</div></div>
+      <div class="card pend"><div class="n" id="cPend">0</div><div class="l">Pendentes</div></div>
+      <div class="card ok"><div class="n" id="cOk">0</div><div class="l">Prontos</div></div>
+      <div class="card"><div class="n" id="cFaltaTotal">0</div><div class="l">Faltas em aberto</div></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Buscar modelo...">
+    <div class="chip active" data-filter="todos">Todos</div>
+    <div class="chip" data-filter="pendente">Pendentes</div>
+    <div class="chip" data-filter="ok">Prontos</div>
+    <button id="clearSectorFilter" style="display:none;">✕ limpar filtro de setor</button>
+    <button class="primary" id="addRow">+ Novo modelo</button>
+    <button id="refreshData">🔄 Atualizar da planilha</button>
+    <button id="exportCsv">Exportar CSV</button>
+    <button id="resetData">Restaurar original</button>
+  </div>
+
+  <div class="legend">
+    <span class="sw"><span class="dot" style="background:var(--empty-bg);border:1px solid var(--line);"></span>não iniciado</span>
+    <span class="sw"><span class="dot" style="background:var(--lancar);"></span>lançar</span>
+    <span class="sw"><span class="dot" style="background:var(--lancado);"></span>lançado</span>
+    <span class="sw"><span class="dot" style="background:var(--falta);"></span>falta entregar</span>
+    <span class="sw"><span class="dot" style="background:var(--naopassa);"></span>não passa</span>
+  </div>
+
+  <div class="table-scroll">
+    <table id="mainTable">
+      <thead><tr id="headRow"></tr></thead>
+      <tbody id="bodyRows"></tbody>
+    </table>
+  </div>
+  <div class="hint">Clique numa célula do setor pra girar entre os status. Clique com o botão direito (ou no ×) pra limpar rápido.</div>
+
+  <div class="waiting">
+    <h2 id="waitingToggle"><span class="arrow">▾</span> Fila de espera <span id="waitingCount" style="color:var(--text-faint);font-weight:400;"></span></h2>
+    <div class="waiting-list" id="waitingList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SECTORS = ['DESENHO','FUSAO','TUBULAR','PINTURA','ATELIE','TECELAGEM','MARCENARIA','MONTAGEM','EMBALAGEM'];
+const SECTOR_LABELS = {DESENHO:'Desenho',FUSAO:'Fusão',TUBULAR:'Tubular',PINTURA:'Pintura',ATELIE:'Ateliê',TECELAGEM:'Tecelagem',MARCENARIA:'Marcenaria',MONTAGEM:'Montagem',EMBALAGEM:'Embalagem'};
+const STATES = ['', 'FALTA', 'LANCAR', 'LANCADO', 'NAO_PASSA'];
+const STATE_LABEL = {'':'', 'FALTA':'FALTA', 'LANCAR':'LANÇAR', 'LANCADO':'LANÇADO', 'NAO_PASSA':'NÃO PASSA'};
+
+const DEFAULT_DATA = {"rows": [{"id": 1, "modelo": "APARADOR CAPRI", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 2, "modelo": "BALANÇO BARI", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 3, "modelo": "BALANÇO BÉLGICA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 4, "modelo": "BALANÇO LENNON", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 5, "modelo": "BANQUETA BÉLGICA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 6, "modelo": "BANQUETA DAMIAN", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 7, "modelo": "BANQUETA LUGANO", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 8, "modelo": "BANQUETA NAPOLE", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 9, "modelo": "BASE OMBRELONE LATERAL", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 10, "modelo": "BASE OMBRELONE LATERAL", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 11, "modelo": "BISTRÔ BÉLGICA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 12, "modelo": "BISTRÔ NORONHA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 13, "modelo": "BISTRÔ PÉ BOLACHA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 14, "modelo": "CADEIRA BELIZE", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 15, "modelo": "CADEIRA NÁPOLE", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 16, "modelo": "CARRINHO CAPRI", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 17, "modelo": "CARRINHO NORONHA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 18, "modelo": "CHAISE VALENTIN- LADO DIREITO", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 19, "modelo": "CONCHA BARI", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 20, "modelo": "ESPREGUIÇADEIRA BARCELOS SIMPLES", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 21, "modelo": "ESPREGUIÇADEIRA LÍRA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 22, "modelo": "ESPREGUIÇADEIRA LÍRA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 23, "modelo": "ESPREGUIÇADEIRA LOS ANGELES CORDA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 24, "modelo": "ESPREGUIÇADEIRA LUGANO", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 25, "modelo": "ESPREGUIÇADEIRA SAARA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 26, "modelo": "ESPREGUIÇADEIRA VALÊNCIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 27, "modelo": "MESA  DE JANTAR TURQUIA", "DESENHO": "LANCADO", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "FALTA", "MARCENARIA": "NAO_PASSA", "MONTAGEM": "FALTA", "EMBALAGEM": "LANCAR"}, {"id": 28, "modelo": "MESA CAPITÓLIO JANTAR", "DESENHO": "FALTA", "FUSAO": "FALTA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "LANCAR"}, {"id": 29, "modelo": "MESA DE CENTRO CAPRI", "DESENHO": "FALTA", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 30, "modelo": "MESA DE CENTRO ENCOST", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 31, "modelo": "MESA DE CENTRO LARA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 32, "modelo": "MESA DE CENTRO LÍRA", "DESENHO": "FALTA", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 33, "modelo": "MESA DE CENTRO MALIBU", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 34, "modelo": "MESA DE JANTAR BÉLGICA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 35, "modelo": "MESA DE JANTAR CALISTA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 36, "modelo": "MESA DE JANTAR DAMIAN", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 37, "modelo": "MESA DE JANTAR ILHEUS", "DESENHO": "LANCAR", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 38, "modelo": "MESA DE JANTAR LÍRA", "DESENHO": "LANCAR", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 39, "modelo": "MESA DE JANTAR SICÍLIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 40, "modelo": "MESA DE JANTAR VALÊNCIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 41, "modelo": "MESA LATERAL CAPRI", "DESENHO": "LANCADO", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "NAO_PASSA", "TECELAGEM": "NAO_PASSA", "MARCENARIA": "FALTA", "MONTAGEM": "FALTA", "EMBALAGEM": "LANCAR"}, {"id": 42, "modelo": "MESA LATERAL DAKOTA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 43, "modelo": "MESA LATERAL ÉVORA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 44, "modelo": "MESA LATERAL MEDELIN", "DESENHO": "LANCADO", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 45, "modelo": "MESA LATERAL MEXICO", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 46, "modelo": "MESA LATERAL NORONHA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 47, "modelo": "MESA LATERAL SAARA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 48, "modelo": "MESA PÉ BOLACHA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 49, "modelo": "MÓDULO VALENTIN CURVO CENTRAL", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 50, "modelo": "MÓDULO VALENTIN LATERAL- LADO ESQUERDO", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 51, "modelo": "OMBRELONE CENTRAL 2,70ø COM MANIVELA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 52, "modelo": "OMBRELONE LATERAL 3,00X3,00", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 53, "modelo": "OMBRELONE LATERAL 3,30ø", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 54, "modelo": "POLTRONA ANTIBES JANTAR", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 55, "modelo": "POLTRONA CAPITÓLIO JANTAR", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 56, "modelo": "POLTRONA CAPRI", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 57, "modelo": "POLTRONA DE JANTAR BÉLGICA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 58, "modelo": "POLTRONA DE JANTAR DAMIAN", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 59, "modelo": "POLTRONA DE JANTAR ILHEUS", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 60, "modelo": "POLTRONA DE JANTAR LENNON", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 61, "modelo": "POLTRONA DE JANTAR SAARA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 62, "modelo": "POLTRONA DE JANTAR VALÊNCIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 63, "modelo": "POLTRONA DUDA TRICÔ", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 64, "modelo": "POLTRONA ENCOST", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 65, "modelo": "POLTRONA ITAPUÃ", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 66, "modelo": "POLTRONA JANTAR  LOOP", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 67, "modelo": "POLTRONA LÍRA SALA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 68, "modelo": "POLTRONA LUGANO JANTAR", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 69, "modelo": "POLTRONA MANAUS SALA", "DESENHO": "LANCAR", "FUSAO": "NAO_PASSA", "TUBULAR": "LANCAR", "PINTURA": "FALTA", "ATELIE": "FALTA", "TECELAGEM": "FALTA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 70, "modelo": "POLTRONA MEDELIN SALA", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 71, "modelo": "POLTRONA MEXICO", "DESENHO": "LANCAR", "FUSAO": "NAO_PASSA", "TUBULAR": "LANCAR", "PINTURA": "FALTA", "ATELIE": "FALTA", "TECELAGEM": "FALTA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 72, "modelo": "POLTRONA NÁPOLE JANTAR", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 73, "modelo": "POLTRONA RAVENA SALA", "DESENHO": "FALTA", "FUSAO": "NAO_PASSA", "TUBULAR": "FALTA", "PINTURA": "FALTA", "ATELIE": "FALTA", "TECELAGEM": "FALTA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 74, "modelo": "POLTRONA SICÍLIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 75, "modelo": "POLTRONA TURQUIA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 76, "modelo": "POLTRONA VILLAS", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 77, "modelo": "PUFF PROVENCE", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 78, "modelo": "PUFF REDONDO VALENTIN", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 79, "modelo": "SOFÁ CAPRI", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 80, "modelo": "SOFÁ ENCOST", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 81, "modelo": "SOFA LÍRA", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 82, "modelo": "SOFÁ MANAUS", "DESENHO": "LANCAR", "FUSAO": "NAO_PASSA", "TUBULAR": "LANCAR", "PINTURA": "FALTA", "ATELIE": "FALTA", "TECELAGEM": "FALTA", "MARCENARIA": "LANCAR", "MONTAGEM": "FALTA", "EMBALAGEM": "FALTA"}, {"id": 83, "modelo": "SOFÁ MEXICO", "DESENHO": "", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 84, "modelo": "SUPORTE HORIZONTE", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 85, "modelo": "POLTRONA LEGADO", "DESENHO": "LANCAR", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}, {"id": 86, "modelo": "MESA DE JANTAR TURQUIA", "DESENHO": "LANCADO", "FUSAO": "", "TUBULAR": "", "PINTURA": "", "ATELIE": "", "TECELAGEM": "", "MARCENARIA": "", "MONTAGEM": "", "EMBALAGEM": ""}], "waiting": ["MESA LATERAL CAPRI", "MESA DE CENTRO MEDELIN", "MESA DE JANTAR TURQUIA", "POLTRONA REVAENA SALA", "MESA DE JANTAR BÉLGICA", "BISTRÔ BÉLGICA", "MESA LAT SAARA", "MESA CENTRO LIRA (SOBREPOR)", "MESA CENTRO LIRA"]};
+
+// URL do App da Web publicado no Apps Script (Extensões > Apps Script > Implantar)
+const API_URL = 'https://script.google.com/macros/s/AKfycbwUiFpbPUUrPBE-2AI_7z4n0nELWNTEzgrDHFV0w7l73Xo3cvAYrV6iY4yfVO6OJ_qivg/exec';
+
+let rows = [];
+let waiting = [];
+let nextId = 1;
+let sectorFilter = null; // sector key when filtering by FALTA in a sector
+let statusFilter = 'todos';
+let searchTerm = '';
+let apiOk = false;
+
+const STORE_KEY = 'feira-producao:rows';
+const STORE_WAIT_KEY = 'feira-producao:waiting';
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function setSyncStatus(state, text){
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status ' + state;
+  document.getElementById('syncText').textContent = text;
+}
+
+// GET -> busca o estado atual direto da planilha
+async function apiGetRows(){
+  const res = await fetch(API_URL, {method:'GET'});
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Erro desconhecido na planilha');
+  return data.rows.map(r=>{
+    const row = {id:r.id, modelo:r.modelo};
+    SECTORS.forEach(s=> row[s] = r[s] || '');
+    return row;
+  });
+}
+
+// POST -> manda uma ação pra planilha. Usa text/plain de propósito
+// (evita o preflight OPTIONS que o Apps Script não sabe responder).
+async function apiPost(action, payload){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({action}, payload))
+  });
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Erro desconhecido na planilha');
+  return data;
+}
+
+async function loadData(){
+  setSyncStatus('loading', 'conectando à planilha...');
+  try{
+    rows = await apiGetRows();
+    apiOk = true;
+    setSyncStatus('ok', 'sincronizado às ' + new Date().toLocaleTimeString('pt-BR').slice(0,5));
+    persistRowsLocalCache();
+  }catch(e){
+    apiOk = false;
+    console.error(e);
+    setSyncStatus('error', 'sem conexão com a planilha — usando cópia local');
+    try{
+      const r = await window.storage.get(STORE_KEY, false);
+      rows = r && r.value ? JSON.parse(r.value) : JSON.parse(JSON.stringify(DEFAULT_DATA.rows));
+    }catch(e2){
+      rows = JSON.parse(JSON.stringify(DEFAULT_DATA.rows));
+    }
+  }
+
+  try{
+    const rw = await window.storage.get(STORE_WAIT_KEY, false);
+    waiting = rw && rw.value ? JSON.parse(rw.value) : JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
+  }catch(e){
+    waiting = JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
+  }
+  nextId = Math.max(0, ...rows.map(r=>r.id||0)) + 1;
+}
+
+// cópia local só como cache offline — a fonte da verdade é a planilha
+async function persistRowsLocalCache(){
+  try{ await window.storage.set(STORE_KEY, JSON.stringify(rows), false); }
+  catch(e){ console.error('storage set failed', e); }
+}
+function syncCell(row, sector){
+  apiPost('updateCell', {row: row.id, sector: sector, value: row[sector]})
+    .then(()=> setSyncStatus('ok', 'sincronizado às ' + new Date().toLocaleTimeString('pt-BR').slice(0,5)))
+    .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar na planilha'); showToast('Não salvou na planilha — tenta de novo'); });
+}
+
+async function persistWaiting(){
+  try{ await window.storage.set(STORE_WAIT_KEY, JSON.stringify(waiting), false); }
+  catch(e){ console.error('storage set failed', e); }
+}
+
+function computeStatus(row){
+  const anyFalta = SECTORS.some(s => row[s] === 'FALTA');
+  if(anyFalta) return 'PENDENTE';
+  const anyPending = SECTORS.some(s => row[s] === 'LANCAR');
+  if(anyPending) return 'PENDENTE';
+  if(row['DESENHO'] === 'LANCADO' || row['DESENHO'] === 'NAO_PASSA' || row['DESENHO']==='') {
+    return 'OK';
+  }
+  return 'PENDENTE';
+}
+
+function buildHeader(){
+  const headRow = document.getElementById('headRow');
+  headRow.innerHTML = '';
+  const thModelo = document.createElement('th');
+  thModelo.textContent = 'Modelo';
+  headRow.appendChild(thModelo);
+  SECTORS.forEach(s=>{
+    const th = document.createElement('th');
+    th.textContent = SECTOR_LABELS[s];
+    headRow.appendChild(th);
+  });
+  const thStatus = document.createElement('th');
+  thStatus.textContent = 'Status';
+  headRow.appendChild(thStatus);
+  const thDel = document.createElement('th');
+  thDel.textContent = '';
+  thDel.style.minWidth = '30px';
+  headRow.appendChild(thDel);
+}
+
+function buildLineTrack(){
+  const track = document.getElementById('lineTrack');
+  track.innerHTML = '';
+  SECTORS.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'station' + (sectorFilter===s ? ' active' : '');
+    div.dataset.sector = s;
+    const count = rows.filter(r=>r[s]==='FALTA').length;
+    div.innerHTML = `<span class="lbl">${SECTOR_LABELS[s]}</span><span class="count ${count===0?'zero':''}">${count}</span>`;
+    div.addEventListener('click', ()=>{
+      sectorFilter = (sectorFilter===s) ? null : s;
+      render();
+    });
+    track.appendChild(div);
+  });
+}
+
+function matchesFilters(row){
+  if(searchTerm && !row.modelo.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+  if(sectorFilter && row[sectorFilter] !== 'FALTA') return false;
+  const st = computeStatus(row);
+  if(statusFilter==='pendente' && st!=='PENDENTE') return false;
+  if(statusFilter==='ok' && st!=='OK') return false;
+  return true;
+}
+
+function cycleState(current){
+  const idx = STATES.indexOf(current);
+  return STATES[(idx+1) % STATES.length];
+}
+
+function buildBody(){
+  const tbody = document.getElementById('bodyRows');
+  tbody.innerHTML = '';
+  const visible = rows.filter(matchesFilters);
+
+  if(visible.length===0){
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = SECTORS.length + 3;
+    td.className = 'empty-state';
+    td.textContent = rows.length===0 ? 'Nenhum modelo cadastrado ainda. Clique em "+ Novo modelo".' : 'Nada encontrado com esse filtro.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  visible.forEach(row=>{
+    const tr = document.createElement('tr');
+
+    const tdModelo = document.createElement('td');
+    tdModelo.className = 'modelo-cell';
+    const flex = document.createElement('div');
+    flex.className = 'modelo-flex';
+    const input = document.createElement('input');
+    input.className = 'modelo-input';
+    input.value = row.modelo;
+    input.addEventListener('change', ()=>{
+      row.modelo = input.value.trim();
+      persistRowsLocalCache();
+      apiPost('updateModelo', {row: row.id, value: row.modelo})
+        .then(()=> setSyncStatus('ok', 'sincronizado às ' + new Date().toLocaleTimeString('pt-BR').slice(0,5)))
+        .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar na planilha'); showToast('Não salvou na planilha — tenta de novo'); });
+    });
+    flex.appendChild(input);
+    tdModelo.appendChild(flex);
+    tr.appendChild(tdModelo);
+
+    SECTORS.forEach(s=>{
+      const td = document.createElement('td');
+      const btn = document.createElement('button');
+      btn.className = 'cell-btn ' + row[s];
+      btn.type = 'button';
+      btn.textContent = STATE_LABEL[row[s]] || '—';
+      btn.title = 'Clique para avançar · botão direito para limpar';
+      btn.addEventListener('click', ()=>{
+        row[s] = cycleState(row[s]);
+        persistRowsLocalCache();
+        render();
+        syncCell(row, s);
+      });
+      btn.addEventListener('contextmenu', (ev)=>{
+        ev.preventDefault();
+        row[s] = '';
+        persistRowsLocalCache();
+        render();
+        syncCell(row, s);
+      });
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'status-cell';
+    const st = computeStatus(row);
+    tdStatus.innerHTML = `<span class="${st==='OK'?'status-ok':'status-pend'}">${st}</span>`;
+    tr.appendChild(tdStatus);
+
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-row';
+    delBtn.textContent = '✕';
+    delBtn.title = 'Remover modelo';
+    delBtn.addEventListener('click', async ()=>{
+      if(!confirm(`Remover "${row.modelo}" do controle?`)) return;
+      try{
+        await apiPost('deleteRow', {row: row.id});
+        showToast('Modelo removido da planilha');
+      }catch(err){
+        console.error(err);
+        showToast('Não conseguiu remover na planilha — removendo só localmente');
+      }
+      rows = rows.filter(r=>r.id!==row.id);
+      persistRowsLocalCache();
+      await loadData(); // reindexa: linhas abaixo da removida mudam de número na planilha
+      render();
+    });
+    tdDel.appendChild(delBtn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+}
+
+function buildSummary(){
+  document.getElementById('cTotal').textContent = rows.length;
+  const pend = rows.filter(r=>computeStatus(r)==='PENDENTE').length;
+  document.getElementById('cPend').textContent = pend;
+  document.getElementById('cOk').textContent = rows.length - pend;
+  let faltaTotal = 0;
+  rows.forEach(r=> SECTORS.forEach(s=>{ if(r[s]==='FALTA') faltaTotal++; }));
+  document.getElementById('cFaltaTotal').textContent = faltaTotal;
+}
+
+function buildWaiting(){
+  const list = document.getElementById('waitingList');
+  list.innerHTML = '';
+  document.getElementById('waitingCount').textContent = waiting.length ? `(${waiting.length})` : '';
+  if(waiting.length===0){
+    list.innerHTML = '<div class="empty-state" style="padding:16px;">Fila vazia.</div>';
+    return;
+  }
+  waiting.forEach((name, idx)=>{
+    const item = document.createElement('div');
+    item.className = 'waiting-item';
+    const span = document.createElement('span');
+    span.textContent = name;
+    const btn = document.createElement('button');
+    btn.textContent = '+ Adicionar à produção';
+    btn.addEventListener('click', async ()=>{
+      let newId = nextId++;
+      try{
+        const res = await apiPost('addRow', {modelo: name});
+        newId = res.row;
+        showToast(`"${name}" adicionado à planilha`);
+      }catch(err){
+        console.error(err);
+        showToast('Não salvou na planilha — adicionado só localmente');
+      }
+      const newRow = {id: newId, modelo: name};
+      SECTORS.forEach(s=> newRow[s] = '');
+      rows.push(newRow);
+      waiting = waiting.filter((_,i)=>i!==idx);
+      persistRowsLocalCache();
+      persistWaiting();
+      render();
+    });
+    item.appendChild(span);
+    item.appendChild(btn);
+    list.appendChild(item);
+  });
+}
+
+function render(){
+  buildLineTrack();
+  buildSummary();
+  buildBody();
+  buildWaiting();
+  document.getElementById('clearSectorFilter').style.display = sectorFilter ? 'inline-block' : 'none';
+}
+
+document.getElementById('search').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  buildBody();
+});
+
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    statusFilter = chip.dataset.filter;
+    buildBody();
+  });
+});
+
+document.getElementById('clearSectorFilter').addEventListener('click', ()=>{
+  sectorFilter = null;
+  render();
+});
+
+document.getElementById('addRow').addEventListener('click', async ()=>{
+  const raw = prompt('Nome do novo modelo:');
+  if(!raw || !raw.trim()) return;
+  const name = raw.trim();
+  let newId = nextId++;
+  try{
+    const res = await apiPost('addRow', {modelo: name});
+    newId = res.row;
+    showToast('Modelo adicionado na planilha');
+  }catch(err){
+    console.error(err);
+    showToast('Não salvou na planilha — adicionado só localmente');
+  }
+  const newRow = {id: newId, modelo: name};
+  SECTORS.forEach(s=> newRow[s] = '');
+  rows.unshift(newRow);
+  persistRowsLocalCache();
+  render();
+});
+
+document.getElementById('resetData').addEventListener('click', async ()=>{
+  if(!confirm('Isso vai SOBRESCREVER a planilha inteira com os dados originais da importação. Continuar?')) return;
+  setSyncStatus('loading', 'restaurando na planilha...');
+  try{
+    await apiPost('bulkSync', {rows: DEFAULT_DATA.rows});
+    showToast('Planilha restaurada');
+  }catch(err){
+    console.error(err);
+    showToast('Não conseguiu restaurar na planilha — restaurando só localmente');
+  }
+  waiting = JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
+  await persistWaiting();
+  await loadData();
+  render();
+});
+
+document.getElementById('refreshData').addEventListener('click', async ()=>{
+  await loadData();
+  render();
+  if(apiOk) showToast('Atualizado com o que está na planilha agora');
+});
+
+document.getElementById('exportCsv').addEventListener('click', ()=>{
+  const header = ['MODELO', ...SECTORS.map(s=>SECTOR_LABELS[s]), 'STATUS'];
+  const lines = [header.join(';')];
+  rows.forEach(r=>{
+    const line = [r.modelo, ...SECTORS.map(s=>STATE_LABEL[r[s]]||''), computeStatus(r)];
+    lines.push(line.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
+  });
+  const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `controle_producao_feira_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado');
+});
+
+document.getElementById('waitingToggle').addEventListener('click', ()=>{
+  const h2 = document.getElementById('waitingToggle');
+  const list = document.getElementById('waitingList');
+  h2.classList.toggle('collapsed');
+  list.classList.toggle('collapsed');
+});
+
+(async function init(){
+  buildHeader();
+  await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
