@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Feira</title>
+<title>Controle de Produção — Feira</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -297,7 +297,7 @@ tr:hover .modelo-cell{background:#211d24;}
         <tbody id="bodyRows"></tbody>
       </table>
     </div>
-    <div class="hint">Clique numa célula pra avançar o status · botão direito limpa.</div>
+    <div class="hint">Clique numa célula pra avançar o status · botão direito marca/desmarca "não passa".</div>
 
     <div class="waiting">
       <h2 id="waitingToggle"><span class="arrow">▾</span> Fila de espera <span id="waitingCount" style="color:var(--text-faint);font-weight:400;"></span></h2>
@@ -558,7 +558,7 @@ function buildBody(){
       btn.className = 'cell-btn ' + row[s];
       btn.type = 'button';
       btn.textContent = STATE_LABEL[row[s]] || '–';
-      btn.title = 'Clique para avançar · botão direito para limpar';
+      btn.title = 'Clique para avançar · botão direito marca "não passa"';
       btn.addEventListener('click', ()=>{
         row[s] = cycleState(row[s]);
         persistRowsLocalCache();
@@ -567,7 +567,7 @@ function buildBody(){
       });
       btn.addEventListener('contextmenu', (ev)=>{
         ev.preventDefault();
-        row[s] = '';
+        row[s] = (row[s] === 'NAO_PASSA') ? '' : 'NAO_PASSA';
         persistRowsLocalCache();
         render();
         syncCell(row, s);
