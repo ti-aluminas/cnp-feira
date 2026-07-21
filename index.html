@@ -501,8 +501,12 @@ function buildSectorStrip(){
   });
 }
 
+function normalizeText(s){
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function matchesFilters(row){
-  if(searchTerm && !row.modelo.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+  if(searchTerm && !normalizeText(row.modelo).includes(normalizeText(searchTerm))) return false;
   if(sectorFilter && row[sectorFilter] !== 'FALTA') return false;
   const st = computeStatus(row);
   if(statusFilter==='pendente' && st!=='PENDENTE') return false;
