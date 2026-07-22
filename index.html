@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Produção — Feira</title>
+<title>Feira</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -70,6 +70,33 @@ h1 b{color:var(--bordo);font-weight:700;}
   background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
 }
 .role-btn.admin{border-color:var(--lancado);color:var(--lancado);}
+
+/* ---------- ADMIN MODAL ---------- */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(10,9,11,.6);
+  z-index:100;align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:24px 26px;width:100%;max-width:300px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+}
+.modal-box h3{
+  font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;margin:0 0 4px;color:var(--text);
+}
+.modal-sub{font-size:12.5px;color:var(--text-faint);margin:0 0 16px;}
+.modal-box input{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+  padding:11px 12px;border-radius:6px;font-size:16px;letter-spacing:.3em;text-align:center;
+  font-family:'Inter',sans-serif;
+}
+.modal-box input:focus{outline:none;border-color:var(--bordo);}
+.modal-error{
+  font-size:12px;color:var(--falta);margin-top:9px;display:none;
+}
+.modal-error.show{display:block;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+.modal-actions button{padding:9px 16px;}
 
 body.viewer-mode .edit-modelo-btn,
 body.viewer-mode .del-row,
@@ -303,6 +330,19 @@ tr:hover .edit-modelo-btn{opacity:1;}
       <button class="tab" data-tab="analise">Análise</button>
     </div>
   </header>
+
+  <div class="modal-overlay" id="adminModalOverlay">
+    <div class="modal-box">
+      <h3>Código de admin</h3>
+      <p class="modal-sub">Digite o código pra liberar a edição.</p>
+      <input type="password" id="adminCodeInput" inputmode="numeric" autocomplete="off" placeholder="••••">
+      <div class="modal-error" id="adminError">Código incorreto — tenta de novo.</div>
+      <div class="modal-actions">
+        <button id="adminCancelBtn">Cancelar</button>
+        <button id="adminConfirmBtn" class="primary">Entrar</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ================= PRODUÇÃO ================= -->
   <div class="view active" id="view-producao">
@@ -893,6 +933,31 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
+function openAdminModal(){
+  const overlay = document.getElementById('adminModalOverlay');
+  const input = document.getElementById('adminCodeInput');
+  document.getElementById('adminError').classList.remove('show');
+  input.value = '';
+  overlay.classList.add('show');
+  setTimeout(()=> input.focus(), 50);
+}
+function closeAdminModal(){
+  document.getElementById('adminModalOverlay').classList.remove('show');
+}
+function tryAdminCode(){
+  const input = document.getElementById('adminCodeInput');
+  if(input.value.trim() === ADMIN_CODE){
+    isAdmin = true;
+    updateRoleUI();
+    closeAdminModal();
+    showToast('Modo admin ativado');
+  } else {
+    document.getElementById('adminError').classList.add('show');
+    input.value = '';
+    input.focus();
+  }
+}
+
 document.getElementById('roleToggle').addEventListener('click', ()=>{
   if(isAdmin){
     isAdmin = false;
@@ -900,15 +965,16 @@ document.getElementById('roleToggle').addEventListener('click', ()=>{
     showToast('Modo visualização ativado');
     return;
   }
-  const code = prompt('Código de admin:');
-  if(code === null) return;
-  if(code.trim() === ADMIN_CODE){
-    isAdmin = true;
-    updateRoleUI();
-    showToast('Modo admin ativado');
-  } else {
-    showToast('Código incorreto');
-  }
+  openAdminModal();
+});
+document.getElementById('adminConfirmBtn').addEventListener('click', tryAdminCode);
+document.getElementById('adminCancelBtn').addEventListener('click', closeAdminModal);
+document.getElementById('adminCodeInput').addEventListener('keydown', (ev)=>{
+  if(ev.key === 'Enter') tryAdminCode();
+  if(ev.key === 'Escape') closeAdminModal();
+});
+document.getElementById('adminModalOverlay').addEventListener('click', (ev)=>{
+  if(ev.target.id === 'adminModalOverlay') closeAdminModal();
 });
 
 document.getElementById('search').addEventListener('input', (e)=>{
