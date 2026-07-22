@@ -32,7 +32,7 @@ body{
   min-height:100vh;
   font-size:14px;
 }
-.wrap{max-width:1360px;margin:0 auto;padding:32px 20px 60px;}
+.wrap{max-width:1800px;margin:0 auto;padding:32px 32px 60px;}
 
 /* ---------- HEADER ---------- */
 header{margin-bottom:22px;}
@@ -101,8 +101,7 @@ h1 b{color:var(--bordo);font-weight:700;}
 body.viewer-mode .edit-modelo-btn,
 body.viewer-mode .del-row,
 body.viewer-mode #addRow,
-body.viewer-mode #resetData,
-body.viewer-mode .waiting-item button{
+body.viewer-mode #resetData{
   display:none;
 }
 body.viewer-mode .cell-btn{cursor:default;}
@@ -195,13 +194,23 @@ html{scrollbar-width:thin;scrollbar-color:var(--surface-2) var(--bg);}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--surface-2);border-radius:20px;border:2px solid var(--bg);}
 ::-webkit-scrollbar-thumb:hover{background:var(--border);}
-table{border-collapse:collapse;width:100%;min-width:1050px;}
+table{border-collapse:collapse;width:100%;min-width:1250px;}
 thead th{
   position:sticky;top:0;z-index:2;background:var(--surface-2);color:var(--text-dim);
   font-weight:600;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
   padding:10px 6px;text-align:center;border-bottom:1px solid var(--border);
 }
 thead th:first-child{text-align:left;padding-left:14px;position:sticky;left:0;z-index:3;min-width:200px;}
+thead th.sortable{cursor:pointer;user-select:none;transition:color .1s;}
+thead th.sortable:hover{color:var(--text);}
+thead th.sortable .arrow{display:inline-block;margin-left:3px;font-size:9px;color:var(--text-faint);}
+thead th.sortable.active .arrow{color:var(--bordo);}
+thead th.sortable.active{color:var(--text);}
+.pct-cell{min-width:76px;font-size:11px;font-weight:600;}
+.pct-bar-wrap{display:flex;align-items:center;gap:6px;padding:0 8px;}
+.pct-bar-track{flex:1;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+.pct-bar-fill{height:100%;background:var(--lancado);border-radius:3px;}
+.pct-num{min-width:32px;text-align:right;color:var(--text-dim);}
 tbody td{border-bottom:1px solid var(--border);padding:0;text-align:center;}
 tbody tr:hover{background:rgba(255,255,255,.015);}
 .modelo-cell{
@@ -239,22 +248,12 @@ tr:hover .edit-modelo-btn{opacity:1;}
 .cell-btn.NAO_PASSA{color:var(--naopassa);text-decoration:line-through;}
 .cell-btn.LANCAR{color:var(--lancar);}
 .cell-btn.LANCADO{color:var(--lancado);}
-
-/* ---------- WAITING LIST ---------- */
-.waiting{margin-top:28px;}
-.waiting h2{
-  font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:600;
-  color:var(--text-dim);margin:0 0 12px;display:flex;align-items:center;gap:8px;cursor:pointer;
-}
-.waiting h2 .arrow{transition:transform .15s;font-size:12px;}
-.waiting h2.collapsed .arrow{transform:rotate(-90deg);}
-.waiting-list{display:flex;flex-direction:column;gap:6px;}
-.waiting-list.collapsed{display:none;}
-.waiting-item{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);border:1px solid var(--border);border-radius:6px;
-  padding:9px 12px;font-size:13px;
-}
+.cell-btn.CONF_LOCKED{color:var(--text-faint);opacity:.4;cursor:not-allowed;}
+.cell-btn.CONF_LOCKED:hover{opacity:.4;}
+.cell-btn.CONF_PENDENTE{color:var(--lancar);}
+.cell-btn.CONF_OK{color:var(--lancado);}
+.conf-cell{min-width:92px;}
+.final-cell{min-width:90px;font-size:11.5px;color:var(--text-dim);}
 
 /* ---------- ANALYSIS VIEW ---------- */
 .analise-grid{display:grid;grid-template-columns:1fr;gap:24px;}
@@ -385,12 +384,7 @@ tr:hover .edit-modelo-btn{opacity:1;}
         <tbody id="bodyRows"></tbody>
       </table>
     </div>
-    <div class="hint">Clique numa célula pra avançar o status · botão direito marca/desmarca "não passa".</div>
-
-    <div class="waiting">
-      <h2 id="waitingToggle"><span class="arrow">▾</span> Fila de espera <span id="waitingCount" style="color:var(--text-faint);font-weight:400;"></span></h2>
-      <div class="waiting-list" id="waitingList"></div>
-    </div>
+    <div class="hint">Clique numa célula pra avançar o status · botão direito marca/desmarca "não passa" · a coluna Conferência libera quando o Status ficar OK.</div>
   </div>
 
   <!-- ================= ANÁLISE ================= -->
@@ -444,7 +438,6 @@ const DEFAULT_DATA = {"rows": [{"id": 1, "modelo": "APARADOR CAPRI", "DESENHO": 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwUiFpbPUUrPBE-2AI_7z4n0nELWNTEzgrDHFV0w7l73Xo3cvAYrV6iY4yfVO6OJ_qivg/exec';
 
 let rows = [];
-let waiting = [];
 let nextId = 1;
 let sectorFilter = null;
 let statusFilter = 'todos';
@@ -474,7 +467,6 @@ function updateRoleUI(){
 }
 
 const STORE_KEY = 'feira-producao:rows';
-const STORE_WAIT_KEY = 'feira-producao:waiting';
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -513,6 +505,8 @@ async function apiGetRows(){
   return data.rows.map(r=>{
     const row = {id:r.id, modelo:r.modelo};
     SECTORS.forEach(s=> row[s] = r[s] || '');
+    row.conferencia = r.conferencia || '';
+    row.dataFinalizacaoTs = r.dataFinalizacaoTs ? Number(r.dataFinalizacaoTs) : null;
     return row;
   });
 }
@@ -545,12 +539,6 @@ async function loadData(){
       rows = JSON.parse(JSON.stringify(DEFAULT_DATA.rows));
     }
   }
-  try{
-    const rw = await window.storage.get(STORE_WAIT_KEY, false);
-    waiting = rw && rw.value ? JSON.parse(rw.value) : JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
-  }catch(e){
-    waiting = JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
-  }
   nextId = Math.max(0, ...rows.map(r=>r.id||0)) + 1;
 }
 
@@ -558,15 +546,22 @@ async function persistRowsLocalCache(){
   try{ await window.storage.set(STORE_KEY, JSON.stringify(rows), false); }
   catch(e){ console.error('storage set failed', e); }
 }
-async function persistWaiting(){
-  try{ await window.storage.set(STORE_WAIT_KEY, JSON.stringify(waiting), false); }
-  catch(e){ console.error('storage set failed', e); }
-}
 
 function syncCell(row, sector){
   apiPost('updateCell', {row: row.id, sector: sector, value: row[sector]})
     .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
     .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+}
+
+function syncConferencia(row){
+  apiPost('updateConferencia', {row: row.id, conferencia: row.conferencia || '', dataFinalizacaoTs: row.dataFinalizacaoTs || ''})
+    .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
+    .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+}
+
+function formatDatePtBR(ts){
+  if(!ts) return '';
+  return new Date(ts).toLocaleDateString('pt-BR');
 }
 
 /* ---------------- helpers de status/análise ---------------- */
@@ -580,22 +575,88 @@ function computeStatus(row){
 }
 function isFullyMapped(row){ return SECTORS.slice(1).some(s => row[s] !== ''); }
 function pendingSectorsOf(row){ return SECTORS.filter(s => row[s]==='FALTA' || row[s]==='LANCAR'); }
+function isConferenciaUnlocked(row){ return computeStatus(row) === 'OK'; }
+
+/* percentual de conclusão — setores marcados "não passa" saem do cálculo (não contam nem a favor nem contra) */
+function computePct(row){
+  const naoPassaCount = SECTORS.filter(s => row[s] === 'NAO_PASSA').length;
+  const applicable = SECTORS.length - naoPassaCount;
+  if(applicable <= 0) return 100;
+  const done = SECTORS.filter(s => row[s] === 'LANCADO').length;
+  return Math.round((done / applicable) * 100);
+}
+
+/* ---------------- ordenação da tabela ---------------- */
+let sortKey = null;   // 'modelo' | 'status' | 'pct' | 'conferencia' | 'finalizacao' | nome do setor
+let sortDir = 1;      // 1 = asc, -1 = desc
+const SECTOR_SORT_ORDER = {'':0, 'FALTA':1, 'LANCAR':2, 'LANCADO':3, 'NAO_PASSA':4};
+const STATUS_SORT_ORDER = {'PENDENTE':0, 'OK':1};
+
+function setSort(key){
+  if(sortKey === key){ sortDir *= -1; }
+  else { sortKey = key; sortDir = 1; }
+  render();
+}
+
+function sortRows(list){
+  if(!sortKey) return list;
+  const dir = sortDir;
+  const arr = list.slice();
+  arr.sort((a,b)=>{
+    let av, bv;
+    if(sortKey === 'modelo'){
+      return dir * String(a.modelo).localeCompare(String(b.modelo), 'pt-BR');
+    }
+    if(sortKey === 'status'){
+      av = STATUS_SORT_ORDER[computeStatus(a)]; bv = STATUS_SORT_ORDER[computeStatus(b)];
+      return dir * (av - bv);
+    }
+    if(sortKey === 'pct'){
+      av = computePct(a); bv = computePct(b);
+      return dir * (av - bv);
+    }
+    if(sortKey === 'conferencia'){
+      av = a.conferencia === 'OK' ? 1 : 0; bv = b.conferencia === 'OK' ? 1 : 0;
+      return dir * (av - bv);
+    }
+    if(sortKey === 'finalizacao'){
+      av = a.dataFinalizacaoTs || 0; bv = b.dataFinalizacaoTs || 0;
+      return dir * (av - bv);
+    }
+    av = SECTOR_SORT_ORDER[a[sortKey]] ?? 0;
+    bv = SECTOR_SORT_ORDER[b[sortKey]] ?? 0;
+    return dir * (av - bv);
+  });
+  return arr;
+}
 
 /* ---------------- PRODUÇÃO: render ---------------- */
+function makeSortableTh(label, key){
+  const th = document.createElement('th');
+  th.classList.add('sortable');
+  if(sortKey === key) th.classList.add('active');
+  const labelSpan = document.createElement('span');
+  labelSpan.textContent = label;
+  th.appendChild(labelSpan);
+  const arrow = document.createElement('span');
+  arrow.className = 'arrow';
+  arrow.textContent = sortKey === key ? (sortDir === 1 ? '▲' : '▼') : '↕';
+  th.appendChild(arrow);
+  th.addEventListener('click', ()=> setSort(key));
+  return th;
+}
+
 function buildHeaderRow(){
   const headRow = document.getElementById('headRow');
   headRow.innerHTML = '';
-  const thModelo = document.createElement('th');
-  thModelo.textContent = 'Modelo';
-  headRow.appendChild(thModelo);
+  headRow.appendChild(makeSortableTh('Modelo', 'modelo'));
   SECTORS.forEach(s=>{
-    const th = document.createElement('th');
-    th.textContent = SECTOR_LABELS[s];
-    headRow.appendChild(th);
+    headRow.appendChild(makeSortableTh(SECTOR_LABELS[s], s));
   });
-  const thStatus = document.createElement('th');
-  thStatus.textContent = 'Status';
-  headRow.appendChild(thStatus);
+  headRow.appendChild(makeSortableTh('Status', 'status'));
+  headRow.appendChild(makeSortableTh('% Concl.', 'pct'));
+  headRow.appendChild(makeSortableTh('Conferência', 'conferencia'));
+  headRow.appendChild(makeSortableTh('Finalização', 'finalizacao'));
   const thDel = document.createElement('th');
   thDel.style.minWidth = '26px';
   headRow.appendChild(thDel);
@@ -611,7 +672,7 @@ function buildSectorStrip(){
     chip.innerHTML = `${SECTOR_LABELS[s]} <span class="n ${count===0?'zero':''}">${count}</span>`;
     chip.addEventListener('click', ()=>{
       sectorFilter = (sectorFilter===s) ? null : s;
-      render();
+      renderRows();
     });
     strip.appendChild(chip);
   });
@@ -638,12 +699,12 @@ function cycleState(current){
 function buildBody(){
   const tbody = document.getElementById('bodyRows');
   tbody.innerHTML = '';
-  const visible = rows.filter(matchesFilters);
+  const visible = sortRows(rows.filter(matchesFilters));
 
   if(visible.length===0){
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = SECTORS.length + 3;
+    td.colSpan = SECTORS.length + 6;
     td.className = 'empty-state';
     td.textContent = rows.length===0 ? 'Nenhum modelo cadastrado ainda.' : 'Nada encontrado com esse filtro.';
     tr.appendChild(td);
@@ -651,6 +712,7 @@ function buildBody(){
     return;
   }
 
+  const frag = document.createDocumentFragment();
   visible.forEach(row=>{
     const tr = document.createElement('tr');
 
@@ -717,7 +779,7 @@ function buildBody(){
         if(!requireAdmin()) return;
         row[s] = cycleState(row[s]);
         persistRowsLocalCache();
-        render();
+        renderRows();
         syncCell(row, s);
       });
       btn.addEventListener('contextmenu', (ev)=>{
@@ -725,7 +787,7 @@ function buildBody(){
         if(!requireAdmin()) return;
         row[s] = (row[s] === 'NAO_PASSA') ? '' : 'NAO_PASSA';
         persistRowsLocalCache();
-        render();
+        renderRows();
         syncCell(row, s);
       });
       td.appendChild(btn);
@@ -737,6 +799,46 @@ function buildBody(){
     const st = computeStatus(row);
     tdStatus.innerHTML = `<span class="${st==='OK'?'status-ok':'status-pend'}">${st}</span>`;
     tr.appendChild(tdStatus);
+
+    const tdPct = document.createElement('td');
+    tdPct.className = 'pct-cell';
+    const pct = computePct(row);
+    tdPct.innerHTML = `<div class="pct-bar-wrap"><div class="pct-bar-track"><div class="pct-bar-fill" style="width:${pct}%;"></div></div><span class="pct-num">${pct}%</span></div>`;
+    tr.appendChild(tdPct);
+
+    const tdConf = document.createElement('td');
+    tdConf.className = 'conf-cell';
+    const confBtn = document.createElement('button');
+    confBtn.type = 'button';
+    const unlocked = isConferenciaUnlocked(row);
+    const confDone = row.conferencia === 'OK';
+    confBtn.className = 'cell-btn conf-btn ' + (!unlocked ? 'CONF_LOCKED' : (confDone ? 'CONF_OK' : 'CONF_PENDENTE'));
+    confBtn.textContent = !unlocked ? '🔒' : (confDone ? 'CONFERIDO' : 'CONFERIR');
+    confBtn.title = !unlocked
+      ? 'Libera quando todos os setores estiverem OK'
+      : 'Clique para marcar/desmarcar a conferência final';
+    confBtn.disabled = !unlocked;
+    confBtn.addEventListener('click', ()=>{
+      if(!requireAdmin()) return;
+      if(!isConferenciaUnlocked(row)) return;
+      if(row.conferencia === 'OK'){
+        row.conferencia = '';
+        row.dataFinalizacaoTs = null;
+      } else {
+        row.conferencia = 'OK';
+        row.dataFinalizacaoTs = Date.now();
+      }
+      persistRowsLocalCache();
+      renderRows();
+      syncConferencia(row);
+    });
+    tdConf.appendChild(confBtn);
+    tr.appendChild(tdConf);
+
+    const tdFinal = document.createElement('td');
+    tdFinal.className = 'final-cell';
+    tdFinal.textContent = row.dataFinalizacaoTs ? formatDatePtBR(row.dataFinalizacaoTs) : '—';
+    tr.appendChild(tdFinal);
 
     const tdDel = document.createElement('td');
     const delBtn = document.createElement('button');
@@ -761,8 +863,9 @@ function buildBody(){
     tdDel.appendChild(delBtn);
     tr.appendChild(tdDel);
 
-    tbody.appendChild(tr);
+    frag.appendChild(tr);
   });
+  tbody.appendChild(frag);
 }
 
 function buildSummary(){
@@ -773,47 +876,6 @@ function buildSummary(){
   let faltaTotal = 0;
   rows.forEach(r=> SECTORS.forEach(s=>{ if(r[s]==='FALTA') faltaTotal++; }));
   document.getElementById('cFaltaTotal').textContent = faltaTotal;
-}
-
-function buildWaiting(){
-  const list = document.getElementById('waitingList');
-  list.innerHTML = '';
-  document.getElementById('waitingCount').textContent = waiting.length ? `(${waiting.length})` : '';
-  if(waiting.length===0){
-    list.innerHTML = '<div class="empty-mini">Fila vazia.</div>';
-    return;
-  }
-  waiting.forEach((name, idx)=>{
-    const item = document.createElement('div');
-    item.className = 'waiting-item';
-    const span = document.createElement('span');
-    span.textContent = name;
-    const btn = document.createElement('button');
-    btn.textContent = '+ Adicionar à produção';
-    btn.addEventListener('click', async ()=>{
-      if(!requireAdmin()) return;
-      waiting = waiting.filter((_,i)=>i!==idx);
-      persistWaiting();
-      buildWaiting();
-      try{
-        await apiPost('addRow', {modelo: name});
-        await loadData();
-        render();
-        showToast(`"${name}" adicionado à planilha`);
-      }catch(err){
-        console.error(err);
-        const newRow = {id: nextId++, modelo: name};
-        SECTORS.forEach(s=> newRow[s] = '');
-        rows.push(newRow);
-        persistRowsLocalCache();
-        render();
-        showToast('Não deu pra confirmar com a planilha — adicionado só localmente');
-      }
-    });
-    item.appendChild(span);
-    item.appendChild(btn);
-    list.appendChild(item);
-  });
 }
 
 /* ---------------- ANÁLISE: render ---------------- */
@@ -927,13 +989,38 @@ function buildAnalise(){
 }
 
 /* ---------------- render geral + tabs ---------------- */
+let analiseDirty = true;
+function isAnaliseVisible(){
+  const el = document.getElementById('view-analise');
+  return !!el && el.classList.contains('active');
+}
+function updateClearFilterBtn(){
+  document.getElementById('clearSectorFilter').style.display = sectorFilter ? 'inline-block' : 'none';
+}
+function refreshAnalise(){
+  if(isAnaliseVisible()){ buildAnalise(); analiseDirty = false; }
+  else { analiseDirty = true; }
+}
+
+// Atualização completa: usada quando estrutura muda (linhas adicionadas/removidas, ordenação).
+// Reconstrói o cabeçalho também.
 function render(){
+  buildHeaderRow();
   buildSectorStrip();
   buildSummary();
   buildBody();
-  buildWaiting();
-  buildAnalise();
-  document.getElementById('clearSectorFilter').style.display = sectorFilter ? 'inline-block' : 'none';
+  refreshAnalise();
+  updateClearFilterBtn();
+}
+
+// Atualização leve: usada em toques de célula (avançar status, conferência,
+// filtro de setor). Pula o cabeçalho, que não muda nesses casos.
+function renderRows(){
+  buildSectorStrip();
+  buildSummary();
+  buildBody();
+  refreshAnalise();
+  updateClearFilterBtn();
 }
 
 document.querySelectorAll('.tab').forEach(tab=>{
@@ -942,6 +1029,10 @@ document.querySelectorAll('.tab').forEach(tab=>{
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('view-' + tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab === 'analise' && analiseDirty){
+      buildAnalise();
+      analiseDirty = false;
+    }
   });
 });
 
@@ -989,9 +1080,11 @@ document.getElementById('adminModalOverlay').addEventListener('click', (ev)=>{
   if(ev.target.id === 'adminModalOverlay') closeAdminModal();
 });
 
+let searchDebounceTimer = null;
 document.getElementById('search').addEventListener('input', (e)=>{
   searchTerm = e.target.value;
-  buildBody();
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(buildBody, 120);
 });
 
 document.querySelectorAll('.chip').forEach(chip=>{
@@ -1005,7 +1098,7 @@ document.querySelectorAll('.chip').forEach(chip=>{
 
 document.getElementById('clearSectorFilter').addEventListener('click', ()=>{
   sectorFilter = null;
-  render();
+  renderRows();
 });
 
 document.getElementById('addRow').addEventListener('click', async ()=>{
@@ -1040,8 +1133,6 @@ document.getElementById('resetData').addEventListener('click', async ()=>{
     console.error(err);
     showToast('Não conseguiu restaurar na planilha — restaurando só localmente');
   }
-  waiting = JSON.parse(JSON.stringify(DEFAULT_DATA.waiting));
-  await persistWaiting();
   await loadData();
   render();
 });
@@ -1053,10 +1144,10 @@ document.getElementById('refreshData').addEventListener('click', async ()=>{
 });
 
 document.getElementById('exportCsv').addEventListener('click', ()=>{
-  const header = ['MODELO', ...SECTORS.map(s=>SECTOR_LABELS[s]), 'STATUS'];
+  const header = ['MODELO', ...SECTORS.map(s=>SECTOR_LABELS[s]), 'STATUS', '% CONCLUÍDO', 'CONFERÊNCIA', 'DATA FINALIZAÇÃO'];
   const lines = [header.join(';')];
   rows.forEach(r=>{
-    const line = [r.modelo, ...SECTORS.map(s=>STATE_LABEL[r[s]]||''), computeStatus(r)];
+    const line = [r.modelo, ...SECTORS.map(s=>STATE_LABEL[r[s]]||''), computeStatus(r), computePct(r)+'%', r.conferencia==='OK' ? 'CONFERIDO' : '', r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : ''];
     lines.push(line.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
   });
   const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
@@ -1069,15 +1160,7 @@ document.getElementById('exportCsv').addEventListener('click', ()=>{
   showToast('CSV exportado');
 });
 
-document.getElementById('waitingToggle').addEventListener('click', ()=>{
-  const h2 = document.getElementById('waitingToggle');
-  const list = document.getElementById('waitingList');
-  h2.classList.toggle('collapsed');
-  list.classList.toggle('collapsed');
-});
-
 (async function init(){
-  buildHeaderRow();
   updateRoleUI();
   await loadData();
   render();
