@@ -65,6 +65,22 @@ h1 b{color:var(--bordo);font-weight:700;}
 .sync-status.loading .dot{background:var(--lancar);animation:pulse 1s infinite;}
 @keyframes pulse{50%{opacity:.25;}}
 
+.role-btn{
+  margin-left:10px;font-size:11.5px;padding:5px 10px;border-radius:20px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-dim);
+}
+.role-btn.admin{border-color:var(--lancado);color:var(--lancado);}
+
+body.viewer-mode .edit-modelo-btn,
+body.viewer-mode .del-row,
+body.viewer-mode #addRow,
+body.viewer-mode #resetData,
+body.viewer-mode .waiting-item button{
+  display:none;
+}
+body.viewer-mode .cell-btn{cursor:default;}
+body.viewer-mode .modelo-flex{gap:0;}
+
 /* ---------- TABS ---------- */
 .tabs{
   display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px;
@@ -273,6 +289,7 @@ tr:hover .edit-modelo-btn{opacity:1;}
     <div class="eyebrow">Aluminas Móveis · PCP</div>
     <h1>Controle de <b>Produção — Feira</b></h1>
     <div class="sync-status" id="syncStatus"><span class="dot"></span><span id="syncText">conectando...</span></div>
+    <button id="roleToggle" class="role-btn">🔒 Visualização</button>
 
     <div class="summary">
       <div class="card"><div class="n" id="cTotal">0</div><div class="l">Modelos</div></div>
@@ -381,6 +398,28 @@ let sectorFilter = null;
 let statusFilter = 'todos';
 let searchTerm = '';
 let apiOk = false;
+let isAdmin = false;
+const ADMIN_CODE = '1010';
+
+function requireAdmin(msg){
+  if(!isAdmin){
+    showToast(msg || 'Modo visualização — destrava o admin pra editar');
+    return false;
+  }
+  return true;
+}
+
+function updateRoleUI(){
+  const btn = document.getElementById('roleToggle');
+  document.body.classList.toggle('viewer-mode', !isAdmin);
+  if(isAdmin){
+    btn.textContent = '🔓 Admin';
+    btn.classList.add('admin');
+  } else {
+    btn.textContent = '🔒 Visualização';
+    btn.classList.remove('admin');
+  }
+}
 
 const STORE_KEY = 'feira-producao:rows';
 const STORE_WAIT_KEY = 'feira-producao:waiting';
@@ -594,6 +633,7 @@ function buildBody(){
     }
 
     editBtn.addEventListener('click', ()=>{
+      if(!requireAdmin()) return;
       const input = document.createElement('input');
       input.className = 'modelo-input';
       input.value = row.modelo;
@@ -622,6 +662,7 @@ function buildBody(){
       btn.textContent = STATE_LABEL[row[s]] || '–';
       btn.title = 'Clique para avançar · botão direito marca "não passa"';
       btn.addEventListener('click', ()=>{
+        if(!requireAdmin()) return;
         row[s] = cycleState(row[s]);
         persistRowsLocalCache();
         render();
@@ -629,6 +670,7 @@ function buildBody(){
       });
       btn.addEventListener('contextmenu', (ev)=>{
         ev.preventDefault();
+        if(!requireAdmin()) return;
         row[s] = (row[s] === 'NAO_PASSA') ? '' : 'NAO_PASSA';
         persistRowsLocalCache();
         render();
@@ -650,6 +692,7 @@ function buildBody(){
     delBtn.textContent = '✕';
     delBtn.title = 'Remover modelo';
     delBtn.addEventListener('click', async ()=>{
+      if(!requireAdmin()) return;
       if(!confirm(`Remover "${row.modelo}" do controle?`)) return;
       try{
         await apiPost('deleteRow', {row: row.id});
@@ -696,6 +739,7 @@ function buildWaiting(){
     const btn = document.createElement('button');
     btn.textContent = '+ Adicionar à produção';
     btn.addEventListener('click', async ()=>{
+      if(!requireAdmin()) return;
       waiting = waiting.filter((_,i)=>i!==idx);
       persistWaiting();
       buildWaiting();
@@ -849,6 +893,24 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
+document.getElementById('roleToggle').addEventListener('click', ()=>{
+  if(isAdmin){
+    isAdmin = false;
+    updateRoleUI();
+    showToast('Modo visualização ativado');
+    return;
+  }
+  const code = prompt('Código de admin:');
+  if(code === null) return;
+  if(code.trim() === ADMIN_CODE){
+    isAdmin = true;
+    updateRoleUI();
+    showToast('Modo admin ativado');
+  } else {
+    showToast('Código incorreto');
+  }
+});
+
 document.getElementById('search').addEventListener('input', (e)=>{
   searchTerm = e.target.value;
   buildBody();
@@ -869,6 +931,7 @@ document.getElementById('clearSectorFilter').addEventListener('click', ()=>{
 });
 
 document.getElementById('addRow').addEventListener('click', async ()=>{
+  if(!requireAdmin()) return;
   const raw = prompt('Nome do novo modelo:');
   if(!raw || !raw.trim()) return;
   const name = raw.trim();
@@ -889,6 +952,7 @@ document.getElementById('addRow').addEventListener('click', async ()=>{
 });
 
 document.getElementById('resetData').addEventListener('click', async ()=>{
+  if(!requireAdmin()) return;
   if(!confirm('Isso vai SOBRESCREVER a planilha inteira com os dados originais da importação. Continuar?')) return;
   setSyncStatus('loading', 'restaurando na planilha...');
   try{
@@ -936,6 +1000,7 @@ document.getElementById('waitingToggle').addEventListener('click', ()=>{
 
 (async function init(){
   buildHeaderRow();
+  updateRoleUI();
   await loadData();
   render();
 })();
