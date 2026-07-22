@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Feira</title>
+<title>Controle de Produção — Feira</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -159,6 +159,13 @@ tr:hover .modelo-cell{background:#211d24;}
   font-size:13px;width:100%;padding:2px 0;
 }
 .modelo-input:focus{outline:none;border-bottom:1px solid var(--text-faint);}
+.modelo-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text;}
+.edit-modelo-btn{
+  background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;
+  padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .1s,color .1s;flex-shrink:0;
+}
+tr:hover .edit-modelo-btn{opacity:1;}
+.edit-modelo-btn:hover{color:var(--text);}
 .del-row{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;}
 .del-row:hover{color:var(--falta);}
 .modelo-flex{display:flex;align-items:center;justify-content:space-between;gap:6px;}
@@ -560,17 +567,50 @@ function buildBody(){
     tdModelo.className = 'modelo-cell';
     const flex = document.createElement('div');
     flex.className = 'modelo-flex';
-    const input = document.createElement('input');
-    input.className = 'modelo-input';
-    input.value = row.modelo;
-    input.addEventListener('change', ()=>{
-      row.modelo = input.value.trim();
-      persistRowsLocalCache();
-      apiPost('updateModelo', {row: row.id, value: row.modelo})
-        .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
-        .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'modelo-text';
+    nameSpan.textContent = row.modelo;
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-modelo-btn';
+    editBtn.type = 'button';
+    editBtn.textContent = '✎';
+    editBtn.title = 'Renomear modelo';
+
+    function saveModeloEdit(input){
+      const val = input.value.trim();
+      if(val && val !== row.modelo){
+        row.modelo = val;
+        persistRowsLocalCache();
+        apiPost('updateModelo', {row: row.id, value: row.modelo})
+          .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
+          .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+      }
+      nameSpan.textContent = row.modelo;
+      nameSpan.style.display = '';
+      input.remove();
+      editBtn.style.display = '';
+    }
+
+    editBtn.addEventListener('click', ()=>{
+      const input = document.createElement('input');
+      input.className = 'modelo-input';
+      input.value = row.modelo;
+      nameSpan.style.display = 'none';
+      editBtn.style.display = 'none';
+      flex.insertBefore(input, editBtn);
+      input.focus();
+      input.select();
+      input.addEventListener('blur', ()=> saveModeloEdit(input));
+      input.addEventListener('keydown', (ev)=>{
+        if(ev.key === 'Enter') input.blur();
+        if(ev.key === 'Escape'){ input.value = row.modelo; input.blur(); }
+      });
     });
-    flex.appendChild(input);
+
+    flex.appendChild(nameSpan);
+    flex.appendChild(editBtn);
     tdModelo.appendChild(flex);
     tr.appendChild(tdModelo);
 
