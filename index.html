@@ -270,6 +270,7 @@ tr:hover .edit-modelo-btn{opacity:1;}
 .alert-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
 .alert-emb{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--lancar);color:var(--lancar);}
 .alert-gap{font-size:11px;padding:3px 8px;border-radius:20px;border:1px solid var(--falta);color:var(--falta);}
+.alert-gap.lancar{border-color:var(--lancar);color:var(--lancar);}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
 .panel h3{
   font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;margin:0 0 4px;color:var(--text);
@@ -880,19 +881,25 @@ function buildSummary(){
 
 /* ---------------- ANÁLISE: render ---------------- */
 function buildAnalise(){
-  // embalagem à frente dos outros setores
+  // embalagem à frente dos outros setores — só entra quem tem pendência real atrás
   const embList = document.getElementById('embalagemAlertList');
-  const embAlerta = rows.filter(r => r.EMBALAGEM === 'LANCADO' || r.EMBALAGEM === 'LANCAR');
+  const embAlerta = rows
+    .map(r => ({ row:r, gaps: SECTORS.filter(s => s!=='EMBALAGEM' && (r[s]==='FALTA' || r[s]==='LANCAR')) }))
+    .filter(x => (x.row.EMBALAGEM === 'LANCADO' || x.row.EMBALAGEM === 'LANCAR') && x.gaps.length > 0)
+    .sort((a,b)=> b.gaps.length - a.gaps.length);
   embList.innerHTML = '';
   if(embAlerta.length===0){
     embList.innerHTML = '<div class="empty-mini">Nenhum caso agora — embalagem está alinhada com o resto.</div>';
   } else {
-    embAlerta.forEach(r=>{
-      const gaps = SECTORS.filter(s => s!=='EMBALAGEM' && r[s]==='FALTA');
+    embAlerta.forEach(x=>{
+      const r = x.row;
       const item = document.createElement('div');
       item.className = 'alert-item';
       const embLabel = r.EMBALAGEM === 'LANCADO' ? 'Embalagem: OK' : 'Embalagem: LANÇAR';
-      const gapTags = gaps.map(s=>`<span class="alert-gap">${SECTOR_LABELS[s]} falta</span>`).join('');
+      const gapTags = x.gaps.map(s=>{
+        const isFalta = r[s]==='FALTA';
+        return `<span class="alert-gap${isFalta?'':' lancar'}">${SECTOR_LABELS[s]} ${isFalta?'falta':'lançar'}</span>`;
+      }).join('');
       item.innerHTML = `
         <span class="alert-name">${r.modelo}</span>
         <span class="alert-tags"><span class="alert-emb">${embLabel}</span>${gapTags}</span>
