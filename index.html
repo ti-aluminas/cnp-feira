@@ -223,7 +223,7 @@ tr:hover .modelo-cell{background:#211d24;}
   font-size:13px;width:100%;padding:2px 0;
 }
 .modelo-input:focus{outline:none;border-bottom:1px solid var(--text-faint);}
-.modelo-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text;}
+.modelo-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text;}
 .edit-modelo-btn{
   background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;
   padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .1s,color .1s;flex-shrink:0;
@@ -232,7 +232,11 @@ tr:hover .edit-modelo-btn{opacity:1;}
 .edit-modelo-btn:hover{color:var(--text);}
 .del-row{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;}
 .del-row:hover{color:var(--falta);}
-.modelo-flex{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.modelo-flex{display:flex;align-items:center;gap:6px;}
+.priority-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 3px;border-radius:4px;flex-shrink:0;line-height:1;}
+.priority-btn:hover{color:var(--lancar);}
+.priority-btn.active{color:var(--lancar);}
+tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
 
 .status-cell{font-size:11px;font-weight:600;letter-spacing:.02em;min-width:80px;}
 .status-ok{color:var(--lancado);}
@@ -365,6 +369,7 @@ tr:hover .edit-modelo-btn{opacity:1;}
       <div class="chip active" data-filter="todos">Todos</div>
       <div class="chip" data-filter="pendente">Pendentes</div>
       <div class="chip" data-filter="ok">Prontos</div>
+      <div class="chip" data-filter="prioridade">★ Prioridade</div>
       <button id="clearSectorFilter" style="display:none;">✕ limpar filtro</button>
       <button class="primary" id="addRow">+ Novo modelo</button>
       <button id="refreshData">Atualizar</button>
@@ -394,6 +399,12 @@ tr:hover .edit-modelo-btn{opacity:1;}
       <h3>⚠ Embalagem à frente dos dados</h3>
       <div class="sub">Embalagem já marcada como OK ou LANÇAR — o produto provavelmente já tá pronto, mas outros setores aqui embaixo ainda não foram atualizados. Vale conferir.</div>
       <div id="embalagemAlertList"></div>
+    </div>
+
+    <div class="panel alert-panel" id="embSemDadosPanel">
+      <h3>⏳ Quase prontos, esperando a embalagem</h3>
+      <div class="sub">Todo o resto já foi resolvido (lançado ou não se aplica), mas a embalagem ainda não deu retorno nenhum sobre esse modelo — vale cobrar.</div>
+      <div id="embSemDadosList"></div>
     </div>
 
     <div class="analise-grid">
@@ -508,6 +519,7 @@ async function apiGetRows(){
     SECTORS.forEach(s=> row[s] = r[s] || '');
     row.conferencia = r.conferencia || '';
     row.dataFinalizacaoTs = r.dataFinalizacaoTs ? Number(r.dataFinalizacaoTs) : null;
+    row.prioridade = !!r.prioridade;
     return row;
   });
 }
@@ -556,6 +568,12 @@ function syncCell(row, sector){
 
 function syncConferencia(row){
   apiPost('updateConferencia', {row: row.id, conferencia: row.conferencia || '', dataFinalizacaoTs: row.dataFinalizacaoTs || ''})
+    .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
+    .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+}
+
+function syncPrioridade(row){
+  apiPost('updatePrioridade', {row: row.id, prioridade: row.prioridade ? 1 : 0})
     .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
     .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
 }
@@ -689,6 +707,7 @@ function matchesFilters(row){
   const st = computeStatus(row);
   if(statusFilter==='pendente' && st!=='PENDENTE') return false;
   if(statusFilter==='ok' && st!=='OK') return false;
+  if(statusFilter==='prioridade' && !row.prioridade) return false;
   return true;
 }
 
@@ -717,10 +736,25 @@ function buildBody(){
   visible.forEach(row=>{
     const tr = document.createElement('tr');
 
+    if(row.prioridade) tr.classList.add('priority-row');
+
     const tdModelo = document.createElement('td');
     tdModelo.className = 'modelo-cell';
     const flex = document.createElement('div');
     flex.className = 'modelo-flex';
+
+    const priorityBtn = document.createElement('button');
+    priorityBtn.type = 'button';
+    priorityBtn.className = 'priority-btn' + (row.prioridade ? ' active' : '');
+    priorityBtn.textContent = row.prioridade ? '★' : '☆';
+    priorityBtn.title = row.prioridade ? 'Remover prioridade' : 'Marcar como prioridade';
+    priorityBtn.addEventListener('click', ()=>{
+      if(!requireAdmin()) return;
+      row.prioridade = !row.prioridade;
+      persistRowsLocalCache();
+      renderRows();
+      syncPrioridade(row);
+    });
 
     const nameSpan = document.createElement('span');
     nameSpan.className = 'modelo-text';
@@ -764,6 +798,7 @@ function buildBody(){
       });
     });
 
+    flex.appendChild(priorityBtn);
     flex.appendChild(nameSpan);
     flex.appendChild(editBtn);
     tdModelo.appendChild(flex);
@@ -906,6 +941,31 @@ function buildAnalise(){
       `;
       embList.appendChild(item);
     });
+  }
+
+  // quase prontos, mas sem NENHUM retorno da embalagem (campo em branco)
+  const embSemDadosList = document.getElementById('embSemDadosList');
+  const semDados = rows
+    .filter(r => computeStatus(r)==='OK' && r.EMBALAGEM === '')
+    .sort((a,b)=> (b.prioridade?1:0) - (a.prioridade?1:0));
+  embSemDadosList.innerHTML = '';
+  if(semDados.length===0){
+    embSemDadosList.innerHTML = '<div class="empty-mini">Nenhum modelo pronto travado nisso agora.</div>';
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'simple-list';
+    semDados.forEach(r=>{
+      const div = document.createElement('div');
+      div.className = 'simple-item';
+      div.innerHTML = `<b>${r.prioridade ? '★ ' : ''}${r.modelo}</b><span>sem dado da embalagem</span>`;
+      wrap.appendChild(div);
+    });
+    embSemDadosList.appendChild(wrap);
+    const count = document.createElement('div');
+    count.className = 'sub';
+    count.style.marginTop = '10px';
+    count.textContent = `${semDados.length} modelo${semDados.length>1?'s':''} pronto${semDados.length>1?'s':''} esperando a embalagem reportar.`;
+    embSemDadosList.appendChild(count);
   }
 
   // ranking de setores
@@ -1120,7 +1180,7 @@ document.getElementById('addRow').addEventListener('click', async ()=>{
     showToast('Modelo adicionado na planilha');
   }catch(err){
     console.error(err);
-    const newRow = {id: nextId++, modelo: name};
+    const newRow = {id: nextId++, modelo: name, prioridade: false};
     SECTORS.forEach(s=> newRow[s] = '');
     rows.unshift(newRow);
     persistRowsLocalCache();
