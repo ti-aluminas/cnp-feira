@@ -95,6 +95,10 @@ h1 b{color:var(--bordo);font-weight:700;}
   font-size:12px;color:var(--falta);margin-top:9px;display:none;
 }
 .modal-error.show{display:block;}
+.modal-box.wide{max-width:520px;}
+.modal-list-scroll{max-height:50vh;overflow-y:auto;margin-top:4px;}
+.summary .card{cursor:pointer;transition:background .15s;}
+.summary .card:hover{background:var(--surface-2);}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 .modal-actions button{padding:9px 16px;}
 
@@ -139,6 +143,7 @@ body.viewer-mode .modelo-flex{gap:0;}
 .card .l{font-size:11px;color:var(--text-dim);margin-top:5px;}
 .card.pend .n{color:var(--falta);}
 .card.ok .n{color:var(--lancado);}
+.card.priority-card .n{color:var(--lancar);}
 
 /* ---------- SECTOR STRIP ---------- */
 .sector-strip{
@@ -335,10 +340,11 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
     <button id="roleToggle" class="role-btn">🔒 Visualização</button>
 
     <div class="summary">
-      <div class="card"><div class="n" id="cTotal">0</div><div class="l">Modelos</div></div>
-      <div class="card pend"><div class="n" id="cPend">0</div><div class="l">Pendentes</div></div>
-      <div class="card ok"><div class="n" id="cOk">0</div><div class="l">Prontos</div></div>
-      <div class="card"><div class="n" id="cFaltaTotal">0</div><div class="l">Faltas em aberto</div></div>
+      <div class="card" data-card="total"><div class="n" id="cTotal">0</div><div class="l">Modelos</div></div>
+      <div class="card pend" data-card="pendente"><div class="n" id="cPend">0</div><div class="l">Pendentes</div></div>
+      <div class="card ok" data-card="ok"><div class="n" id="cOk">0</div><div class="l">Prontos</div></div>
+      <div class="card" data-card="falta"><div class="n" id="cFaltaTotal">0</div><div class="l">Faltas em aberto</div></div>
+      <div class="card priority-card" data-card="prioridade"><div class="n" id="cPrioridade">0</div><div class="l">★ Prioridades</div></div>
     </div>
 
     <div class="tabs">
@@ -356,6 +362,19 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
       <div class="modal-actions">
         <button id="adminCancelBtn">Cancelar</button>
         <button id="adminConfirmBtn" class="primary">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="infoModalOverlay">
+    <div class="modal-box wide">
+      <h3 id="infoModalTitle">—</h3>
+      <p class="modal-sub" id="infoModalSub"></p>
+      <div class="modal-list-scroll">
+        <div id="infoModalList" class="simple-list"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="infoModalCloseBtn" class="primary">Fechar</button>
       </div>
     </div>
   </div>
@@ -912,6 +931,7 @@ function buildSummary(){
   let faltaTotal = 0;
   rows.forEach(r=> SECTORS.forEach(s=>{ if(r[s]==='FALTA') faltaTotal++; }));
   document.getElementById('cFaltaTotal').textContent = faltaTotal;
+  document.getElementById('cPrioridade').textContent = rows.filter(r=>r.prioridade).length;
 }
 
 /* ---------------- ANÁLISE: render ---------------- */
@@ -1114,6 +1134,74 @@ function openAdminModal(){
 function closeAdminModal(){
   document.getElementById('adminModalOverlay').classList.remove('show');
 }
+
+/* ---------------- modal de informações dos cards de resumo ---------------- */
+function renderInfoList(list, lineFn){
+  const box = document.getElementById('infoModalList');
+  box.innerHTML = '';
+  if(list.length === 0){
+    box.innerHTML = '<div class="empty-mini">Nenhum modelo aqui agora.</div>';
+    return;
+  }
+  list.forEach(r=>{
+    const div = document.createElement('div');
+    div.className = 'simple-item';
+    div.innerHTML = lineFn(r);
+    box.appendChild(div);
+  });
+}
+
+function openInfoModal(cardType){
+  const byName = (a,b)=> a.modelo.localeCompare(b.modelo, 'pt-BR');
+  let title = '', sub = '', list = [], lineFn;
+
+  if(cardType === 'total'){
+    title = 'Todos os modelos';
+    list = rows.slice().sort(byName);
+    sub = `${list.length} modelo${list.length!==1?'s':''} cadastrado${list.length!==1?'s':''} no total.`;
+    lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${computeStatus(r)==='OK'?'pronto':'pendente'}</span>`;
+  } else if(cardType === 'pendente'){
+    title = 'Modelos pendentes';
+    list = rows.filter(r=>computeStatus(r)==='PENDENTE').sort(byName);
+    sub = `${list.length} modelo${list.length!==1?'s':''} com pelo menos um setor pendente.`;
+    lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${pendingSectorsOf(r).map(s=>SECTOR_LABELS[s]).join(', ') || '—'}</span>`;
+  } else if(cardType === 'ok'){
+    title = 'Modelos prontos';
+    list = rows.filter(r=>computeStatus(r)==='OK').sort(byName);
+    sub = `${list.length} modelo${list.length!==1?'s':''} com tudo lançado ou não aplicável.`;
+    lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${r.conferencia==='OK'?'conferido':'aguardando conferência'}</span>`;
+  } else if(cardType === 'falta'){
+    title = 'Faltas em aberto';
+    list = rows.filter(r=>SECTORS.some(s=>r[s]==='FALTA')).sort(byName);
+    const faltaTotal = rows.reduce((acc,r)=> acc + SECTORS.filter(s=>r[s]==='FALTA').length, 0);
+    sub = `${faltaTotal} falta${faltaTotal!==1?'s':''} espalhada${faltaTotal!==1?'s':''} em ${list.length} modelo${list.length!==1?'s':''}.`;
+    lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${SECTORS.filter(s=>r[s]==='FALTA').map(s=>SECTOR_LABELS[s]).join(', ')}</span>`;
+  } else if(cardType === 'prioridade'){
+    title = '★ Prioridades';
+    list = rows.filter(r=>r.prioridade).sort(byName);
+    sub = `${list.length} modelo${list.length!==1?'s':''} marcado${list.length!==1?'s':''} como prioridade.`;
+    lineFn = r => `<b>${r.modelo}</b><span>${computeStatus(r)==='OK'?'pronto':'pendente'}</span>`;
+  } else {
+    return;
+  }
+
+  document.getElementById('infoModalTitle').textContent = title;
+  document.getElementById('infoModalSub').textContent = sub;
+  renderInfoList(list, lineFn);
+  document.getElementById('infoModalOverlay').classList.add('show');
+}
+function closeInfoModal(){
+  document.getElementById('infoModalOverlay').classList.remove('show');
+}
+document.querySelectorAll('.summary .card').forEach(card=>{
+  card.addEventListener('click', ()=> openInfoModal(card.dataset.card));
+});
+document.getElementById('infoModalCloseBtn').addEventListener('click', closeInfoModal);
+document.getElementById('infoModalOverlay').addEventListener('click', (ev)=>{
+  if(ev.target.id === 'infoModalOverlay') closeInfoModal();
+});
+
+
 function tryAdminCode(){
   const input = document.getElementById('adminCodeInput');
   if(input.value.trim() === ADMIN_CODE){
@@ -1141,7 +1229,7 @@ document.getElementById('adminConfirmBtn').addEventListener('click', tryAdminCod
 document.getElementById('adminCancelBtn').addEventListener('click', closeAdminModal);
 document.getElementById('adminCodeInput').addEventListener('keydown', (ev)=>{
   if(ev.key === 'Enter') tryAdminCode();
-  if(ev.key === 'Escape') closeAdminModal();
+  if(ev.key === 'Escape'){ closeAdminModal(); closeInfoModal(); }
 });
 document.getElementById('adminModalOverlay').addEventListener('click', (ev)=>{
   if(ev.target.id === 'adminModalOverlay') closeAdminModal();
