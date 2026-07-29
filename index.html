@@ -329,6 +329,53 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
   .card .n{font-size:21px;}
   h1{font-size:22px;}
 }
+/* ---------- EXPORT PDF / IMPRESSAO ---------- */
+#pdfArea{display:none;}
+#pdfArea{color:#111;background:#fff;font-family:'Inter',Arial,sans-serif;}
+#pdfArea .pdf-head{border-bottom:2px solid #7A1F2B;padding-bottom:8px;margin-bottom:10px;}
+#pdfArea .pdf-eyebrow{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#8a8a8a;margin-bottom:3px;}
+#pdfArea .pdf-title{font-family:'Barlow Condensed',Arial,sans-serif;font-size:19px;font-weight:700;color:#111;line-height:1.1;}
+#pdfArea .pdf-meta{font-size:8.5px;color:#666;margin-top:4px;}
+#pdfArea .pdf-kpis{display:flex;gap:6px;margin-bottom:10px;}
+#pdfArea .pdf-kpi{border:1px solid #ddd;border-radius:4px;padding:5px 10px;min-width:78px;}
+#pdfArea .pdf-kpi .k{display:block;font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:#888;}
+#pdfArea .pdf-kpi .v{display:block;font-size:15px;font-weight:700;color:#111;font-family:'Barlow Condensed',Arial,sans-serif;line-height:1.2;}
+#pdfArea table.pdf-table{width:100%;border-collapse:collapse;font-size:7.6px;table-layout:fixed;}
+#pdfArea .pdf-table th{
+  background:#F1EEF0;color:#3a343c;border:1px solid #d6d1d8;
+  font-size:7px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+  padding:4px 2px;text-align:center;
+}
+#pdfArea .pdf-table td{border:1px solid #e2dee4;padding:3px 2px;text-align:center;color:#222;}
+#pdfArea .pdf-table th.modelo,#pdfArea .pdf-table td.modelo{text-align:left;padding-left:5px;width:19%;font-size:8px;font-weight:600;word-wrap:break-word;}
+#pdfArea .pdf-table td.pct{font-weight:700;}
+#pdfArea .pdf-table td.st{font-weight:700;font-size:7px;letter-spacing:.02em;}
+#pdfArea .pdf-table tr:nth-child(even) td.modelo{background:#faf9fa;}
+#pdfArea .st.f{background:#FBE4E5;color:#96222A;}
+#pdfArea .st.l{background:#FAF0DE;color:#8A5A12;}
+#pdfArea .st.o{background:#E2F4EA;color:#1E6B45;}
+#pdfArea .st.n{background:#EDECEF;color:#6A646F;text-decoration:line-through;}
+#pdfArea .st.e{color:#c4c0c6;}
+#pdfArea .pdf-star{width:7px;height:7px;color:#7A1F2B;margin-right:3px;vertical-align:-1px;}
+#pdfArea .pdf-empty{padding:14px;color:#888;font-size:9px;}
+#pdfArea .pdf-legend{margin-top:9px;display:flex;gap:6px;align-items:center;font-size:7px;}
+#pdfArea .pdf-legend .lg{padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.04em;}
+#pdfArea .pdf-legend .note{color:#888;font-weight:400;letter-spacing:0;}
+#pdfArea .lg.f{background:#FBE4E5;color:#96222A;}
+#pdfArea .lg.l{background:#FAF0DE;color:#8A5A12;}
+#pdfArea .lg.o{background:#E2F4EA;color:#1E6B45;}
+#pdfArea .lg.n{background:#EDECEF;color:#6A646F;}
+#pdfArea .lg.e{background:#f4f3f5;color:#9b969e;}
+
+@media print{
+  @page{size:A4 landscape;margin:9mm;}
+  html,body{background:#fff !important;}
+  body.printing > *{display:none !important;}
+  body.printing > #pdfArea{display:block !important;}
+  #pdfArea,#pdfArea *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  #pdfArea .pdf-table thead{display:table-header-group;}
+  #pdfArea .pdf-table tr{break-inside:avoid;page-break-inside:avoid;}
+}
 </style>
 </head>
 <body>
@@ -393,6 +440,7 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
       <button class="primary" id="addRow">+ Novo modelo</button>
       <button id="refreshData">Atualizar</button>
       <button id="exportCsv">Exportar CSV</button>
+      <button id="exportPdf">Exportar PDF</button>
       <button id="resetData">Restaurar original</button>
     </div>
 
@@ -459,6 +507,8 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
     </div>
   </div>
 </div>
+
+<div id="pdfArea"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -1369,6 +1419,106 @@ document.getElementById('exportCsv').addEventListener('click', ()=>{
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exportado');
+});
+
+/* ---------------- EXPORTAR PDF (via impressao do navegador) ---------------- */
+const PDF_STATE_CLASS = {'':'e','FALTA':'f','LANCAR':'l','LANCADO':'o','NAO_PASSA':'n'};
+const PDF_STATE_LABEL = {'':'\u2014','FALTA':'FALTA','LANCAR':'LAN\u00c7AR','LANCADO':'OK','NAO_PASSA':'N/P'};
+
+function pdfEscape(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildPdfArea(){
+  const visible = sortRows(rows.filter(matchesFilters));
+  const total = visible.length;
+  const okCount = visible.filter(r=>computeStatus(r)==='OK').length;
+  const confCount = visible.filter(r=>r.conferencia==='OK').length;
+  const media = total ? Math.round(visible.reduce((a,r)=>a+computePct(r),0)/total) : 0;
+
+  const filtros = [];
+  if(searchTerm) filtros.push('busca "'+searchTerm+'"');
+  if(sectorFilter) filtros.push('com falta em '+SECTOR_LABELS[sectorFilter]);
+  if(statusFilter==='pendente') filtros.push('somente pendentes');
+  if(statusFilter==='ok') filtros.push('somente prontos');
+  if(statusFilter==='prioridade') filtros.push('somente prioridades');
+  const filtroTxt = filtros.length ? 'Filtros: '+filtros.join(' \u00b7 ') : 'Todos os modelos (sem filtro)';
+
+  const agora = new Date();
+  const carimbo = agora.toLocaleDateString('pt-BR')+' \u00e0s '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const star = '<svg class="pdf-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2.6 15 9 22 9.9 17 14.7 18.2 21.6 12 18.3 5.8 21.6 7 14.7 2 9.9 9 9"/></svg>';
+
+  const kpis = [
+    ['Modelos', total],
+    ['Prontos', okCount],
+    ['Pendentes', total-okCount],
+    ['Conferidos', confCount],
+    ['M\u00e9dia concl.', media+'%']
+  ];
+
+  let h = '';
+  h += '<div class="pdf-head">';
+  h +=   '<div class="pdf-eyebrow">Aluminas M\u00f3veis \u00b7 PCP</div>';
+  h +=   '<div class="pdf-title">Controle de Produ\u00e7\u00e3o \u2014 Feira</div>';
+  h +=   '<div class="pdf-meta">Gerado em '+carimbo+' \u00b7 '+pdfEscape(filtroTxt)+'</div>';
+  h += '</div>';
+
+  h += '<div class="pdf-kpis">'+kpis.map(k=>'<div class="pdf-kpi"><span class="k">'+k[0]+'</span><span class="v">'+k[1]+'</span></div>').join('')+'</div>';
+
+  h += '<table class="pdf-table"><thead><tr><th class="modelo">Modelo</th>';
+  SECTORS.forEach(s=>{ h += '<th>'+pdfEscape(SECTOR_LABELS[s])+'</th>'; });
+  h += '<th>Status</th><th>%</th><th>Conf.</th><th>Finaliza\u00e7\u00e3o</th></tr></thead><tbody>';
+
+  if(total === 0){
+    h += '<tr><td class="pdf-empty" colspan="'+(SECTORS.length+5)+'">Nenhum modelo dentro do filtro atual.</td></tr>';
+  } else {
+    visible.forEach(r=>{
+      const st = computeStatus(r);
+      h += '<tr>';
+      h += '<td class="modelo">'+(r.prioridade ? star : '')+pdfEscape(r.modelo)+'</td>';
+      SECTORS.forEach(s=>{
+        const v = r[s] || '';
+        h += '<td class="st '+PDF_STATE_CLASS[v]+'">'+PDF_STATE_LABEL[v]+'</td>';
+      });
+      h += '<td class="st '+(st==='OK'?'o':'l')+'">'+st+'</td>';
+      h += '<td class="pct">'+computePct(r)+'%</td>';
+      h += '<td>'+(r.conferencia==='OK' ? 'OK' : '\u2014')+'</td>';
+      h += '<td>'+(r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : '\u2014')+'</td>';
+      h += '</tr>';
+    });
+  }
+  h += '</tbody></table>';
+
+  h += '<div class="pdf-legend">'
+    +  '<span class="lg f">FALTA</span>'
+    +  '<span class="lg l">LAN\u00c7AR</span>'
+    +  '<span class="lg o">OK</span>'
+    +  '<span class="lg n">N/P</span>'
+    +  '<span class="lg e">\u2014</span>'
+    +  '<span class="note">N/P = n\u00e3o passa pelo setor \u00b7 \u2014 = sem dado \u00b7 % desconsidera setores marcados como n\u00e3o passa</span>'
+    +  '</div>';
+
+  document.getElementById('pdfArea').innerHTML = h;
+}
+
+document.getElementById('exportPdf').addEventListener('click', ()=>{
+  buildPdfArea();
+  let done = false;
+  const cleanup = ()=>{
+    if(done) return;
+    done = true;
+    document.body.classList.remove('printing');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  document.body.classList.add('printing');
+  showToast('Na janela de impress\u00e3o escolha "Salvar como PDF"');
+  setTimeout(()=>{
+    window.print();
+    setTimeout(cleanup, 800);
+  }, 120);
 });
 
 (async function init(){
