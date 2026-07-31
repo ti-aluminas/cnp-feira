@@ -243,6 +243,20 @@ tr:hover .edit-modelo-btn{opacity:1;}
 .priority-btn.active{color:var(--lancar);}
 tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
 
+.noprod-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;padding:2px 3px;border-radius:4px;flex-shrink:0;line-height:0;opacity:.45;transition:opacity .12s,color .12s;}
+.noprod-btn svg{width:13px;height:13px;display:block;}
+tr:hover .noprod-btn{opacity:1;}
+.noprod-btn:hover{color:var(--falta);opacity:1;}
+.noprod-btn.active{color:var(--falta);opacity:1;}
+tr.noprod-row{opacity:.42;}
+tr.noprod-row:hover{opacity:.75;}
+tr.noprod-row .modelo-cell{box-shadow:inset 3px 0 0 var(--naopassa);}
+tr.noprod-row .modelo-text{text-decoration:line-through;}
+tr.noprod-row .cell-btn{pointer-events:none;}
+tr.noprod-row .priority-btn{display:none;}
+.status-noprod{color:var(--naopassa);}
+.card.noprod-card .n{color:var(--naopassa);}
+
 .status-cell{font-size:11px;font-weight:600;letter-spacing:.02em;min-width:80px;}
 .status-ok{color:var(--lancado);}
 .status-pend{color:var(--falta);}
@@ -357,6 +371,71 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
 #pdfArea .st.n{background:#EDECEF;color:#6A646F;text-decoration:line-through;}
 #pdfArea .st.e{color:#c4c0c6;}
 #pdfArea .pdf-star{width:7px;height:7px;color:#7A1F2B;margin-right:3px;vertical-align:-1px;}
+#pdfArea tr.pdf-noprod td{color:#9b969e;}
+
+/* --- tamanhos de letra da impressao --- */
+#pdfArea.sz-1 .pdf-title{font-size:19px;}
+#pdfArea.sz-1 .pdf-meta{font-size:8.5px;}
+#pdfArea.sz-1 .pdf-kpi .k{font-size:7.5px;}
+#pdfArea.sz-1 .pdf-kpi .v{font-size:15px;}
+#pdfArea.sz-1 .pdf-table{font-size:7.6px;}
+#pdfArea.sz-1 .pdf-table th{font-size:7px;padding:4px 2px;}
+#pdfArea.sz-1 .pdf-table td{padding:3px 2px;}
+#pdfArea.sz-1 .pdf-table td.modelo,#pdfArea.sz-1 .pdf-table th.modelo{font-size:8px;}
+#pdfArea.sz-1 .pdf-table td.st{font-size:7px;}
+#pdfArea.sz-1 .pdf-legend{font-size:7px;}
+#pdfArea.sz-1 .pdf-star{width:7px;height:7px;}
+
+#pdfArea.sz-2 .pdf-title{font-size:26px;}
+#pdfArea.sz-2 .pdf-meta{font-size:11px;}
+#pdfArea.sz-2 .pdf-kpi{padding:7px 13px;min-width:96px;}
+#pdfArea.sz-2 .pdf-kpi .k{font-size:9px;}
+#pdfArea.sz-2 .pdf-kpi .v{font-size:21px;}
+#pdfArea.sz-2 .pdf-table{font-size:11.5px;}
+#pdfArea.sz-2 .pdf-table th{font-size:9.5px;padding:7px 4px;}
+#pdfArea.sz-2 .pdf-table td{padding:6px 4px;}
+#pdfArea.sz-2 .pdf-table td.modelo,#pdfArea.sz-2 .pdf-table th.modelo{font-size:12.5px;padding-left:9px;}
+#pdfArea.sz-2 .pdf-table td.st{font-size:10px;}
+#pdfArea.sz-2 .pdf-legend{font-size:9.5px;}
+#pdfArea.sz-2 .pdf-legend .lg{padding:3px 10px;}
+#pdfArea.sz-2 .pdf-star{width:10px;height:10px;}
+
+#pdfArea.sz-3 .pdf-title{font-size:34px;}
+#pdfArea.sz-3 .pdf-meta{font-size:13px;}
+#pdfArea.sz-3 .pdf-kpi{padding:10px 16px;min-width:118px;}
+#pdfArea.sz-3 .pdf-kpi .k{font-size:11px;}
+#pdfArea.sz-3 .pdf-kpi .v{font-size:27px;}
+#pdfArea.sz-3 .pdf-table{font-size:16px;}
+#pdfArea.sz-3 .pdf-table th{font-size:12.5px;padding:10px 6px;}
+#pdfArea.sz-3 .pdf-table td{padding:10px 6px;}
+#pdfArea.sz-3 .pdf-table td.modelo,#pdfArea.sz-3 .pdf-table th.modelo{font-size:17.5px;padding-left:12px;}
+#pdfArea.sz-3 .pdf-table td.st{font-size:14px;}
+#pdfArea.sz-3 .pdf-legend{font-size:12px;}
+#pdfArea.sz-3 .pdf-legend .lg{padding:4px 12px;}
+#pdfArea.sz-3 .pdf-star{width:14px;height:14px;}
+
+/* --- modal de impressao --- */
+.print-group{padding:12px 0;border-bottom:1px solid var(--border);}
+.print-group:last-of-type{border-bottom:none;}
+.print-label{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:9px;
+}
+.mini-btn{font-size:10.5px;padding:3px 8px;border-radius:20px;line-height:1.3;}
+.print-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.prt-chip{
+  font-size:12px;padding:6px 11px;border-radius:6px;cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);
+  transition:border-color .12s,color .12s,background .12s;user-select:none;
+}
+.prt-chip:hover{border-color:var(--text-faint);color:var(--text);}
+.prt-chip.on{border-color:var(--bordo);color:var(--text);background:var(--bordo-soft);}
+.print-count{
+  margin-top:14px;padding:10px 12px;border-radius:6px;background:var(--surface-2);
+  font-size:12.5px;color:var(--text-dim);
+}
+.print-count b{color:var(--text);font-weight:600;}
+#pdfArea tr.pdf-noprod td.modelo{text-decoration:line-through;color:#8a848f;}
 #pdfArea .pdf-empty{padding:14px;color:#888;font-size:9px;}
 #pdfArea .pdf-legend{margin-top:9px;display:flex;gap:6px;align-items:center;font-size:7px;}
 #pdfArea .pdf-legend .lg{padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.04em;}
@@ -368,7 +447,7 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
 #pdfArea .lg.e{background:#f4f3f5;color:#9b969e;}
 
 @media print{
-  @page{size:A4 landscape;margin:9mm;}
+  @page{size:A4 portrait;margin:11mm;}
   html,body{background:#fff !important;}
   body.printing > *{display:none !important;}
   body.printing > #pdfArea{display:block !important;}
@@ -392,6 +471,7 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
       <div class="card ok" data-card="ok"><div class="n" id="cOk">0</div><div class="l">Prontos</div></div>
       <div class="card" data-card="falta"><div class="n" id="cFaltaTotal">0</div><div class="l">Faltas em aberto</div></div>
       <div class="card priority-card" data-card="prioridade"><div class="n" id="cPrioridade">0</div><div class="l">★ Prioridades</div></div>
+      <div class="card noprod-card" data-card="naoproduz"><div class="n" id="cNaoProduz">0</div><div class="l">Não vai produzir</div></div>
     </div>
 
     <div class="tabs">
@@ -426,6 +506,43 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
     </div>
   </div>
 
+  <div class="modal-overlay" id="printModalOverlay">
+    <div class="modal-box wide">
+      <h3>Imprimir / PDF</h3>
+      <p class="modal-sub">Escolha o que vai sair no papel.</p>
+      <div class="modal-list-scroll">
+        <div class="print-group">
+          <div class="print-label">Setores
+            <button class="mini-btn" id="prtAllSectors">todos</button>
+            <button class="mini-btn" id="prtNoSectors">nenhum</button>
+          </div>
+          <div class="print-chips" id="prtSectors"></div>
+        </div>
+        <div class="print-group">
+          <div class="print-label">Colunas extras</div>
+          <div class="print-chips" id="prtExtras"></div>
+        </div>
+        <div class="print-group">
+          <div class="print-label">Quais modelos</div>
+          <div class="print-chips" id="prtScope"></div>
+        </div>
+        <div class="print-group">
+          <div class="print-label">Tamanho da letra</div>
+          <div class="print-chips" id="prtSize"></div>
+        </div>
+        <div class="print-group">
+          <div class="print-label">Orientação da folha</div>
+          <div class="print-chips" id="prtOrient"></div>
+        </div>
+        <div class="print-count" id="prtCount"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="printCancelBtn">Cancelar</button>
+        <button id="printConfirmBtn" class="primary">Imprimir</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= PRODUÇÃO ================= -->
   <div class="view active" id="view-producao">
     <div class="sector-strip" id="sectorStrip"></div>
@@ -436,11 +553,12 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
       <div class="chip" data-filter="pendente">Pendentes</div>
       <div class="chip" data-filter="ok">Prontos</div>
       <div class="chip" data-filter="prioridade">★ Prioridade</div>
+      <div class="chip" data-filter="naoproduz">Não vai produzir</div>
       <button id="clearSectorFilter" style="display:none;">✕ limpar filtro</button>
       <button class="primary" id="addRow">+ Novo modelo</button>
       <button id="refreshData">Atualizar</button>
       <button id="exportCsv">Exportar CSV</button>
-      <button id="exportPdf">Exportar PDF</button>
+      <button id="exportPdf">Imprimir / PDF</button>
       <button id="resetData">Restaurar original</button>
     </div>
 
@@ -449,6 +567,7 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
       <span class="sw"><span class="dot" style="background:var(--lancado);"></span>ok</span>
       <span class="sw"><span class="dot" style="background:var(--falta);"></span>falta entregar</span>
       <span class="sw"><span class="dot" style="background:var(--naopassa);"></span>não passa</span>
+      <span class="sw" style="opacity:.5;text-decoration:line-through;">modelo que não vai produzir</span>
     </div>
 
     <div class="table-scroll">
@@ -457,7 +576,7 @@ tr.priority-row .modelo-cell{box-shadow:inset 3px 0 0 var(--lancar);}
         <tbody id="bodyRows"></tbody>
       </table>
     </div>
-    <div class="hint">Clique numa célula pra avançar o status · botão direito marca/desmarca "não passa" · a coluna Conferência libera quando o Status ficar OK.</div>
+    <div class="hint">Clique numa célula pra avançar o status · botão direito marca/desmarca "não passa" · a coluna Conferência libera quando o Status ficar OK · o botão ⊘ ao lado do nome marca o modelo como "não vai produzir" (sai de todos os indicadores).</div>
   </div>
 
   <!-- ================= ANÁLISE ================= -->
@@ -595,6 +714,7 @@ async function apiGetRows(){
     row.conferencia = r.conferencia || '';
     row.dataFinalizacaoTs = r.dataFinalizacaoTs ? Number(r.dataFinalizacaoTs) : null;
     row.prioridade = !!r.prioridade;
+    row.naoProduz = !!r.naoProduz;
     return row;
   });
 }
@@ -653,6 +773,17 @@ function syncPrioridade(row){
     .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
 }
 
+function syncNaoProduz(row){
+  apiPost('updateNaoProduz', {row: row.id, naoProduz: row.naoProduz ? 1 : 0})
+    .then(()=> setSyncStatus('ok', 'sincronizado às ' + nowHM()))
+    .catch(err=>{ console.error(err); setSyncStatus('error', 'falha ao salvar'); showToast('Não salvou na planilha — tenta de novo'); });
+}
+
+/* modelos que entram nos indicadores — os marcados como "não vai produzir" ficam de fora */
+function activeRows(){ return rows.filter(r=>!r.naoProduz); }
+
+const NOPROD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="5.7" y1="5.7" x2="18.3" y2="18.3"/></svg>';
+
 function formatDatePtBR(ts){
   if(!ts) return '';
   return new Date(ts).toLocaleDateString('pt-BR');
@@ -693,9 +824,12 @@ function setSort(key){
 }
 
 function sortRows(list){
-  if(!sortKey) return list;
   const dir = sortDir;
   const arr = list.slice();
+  if(!sortKey){
+    arr.sort((a,b)=> (a.naoProduz?1:0) - (b.naoProduz?1:0));
+    return arr;
+  }
   arr.sort((a,b)=>{
     let av, bv;
     if(sortKey === 'modelo'){
@@ -721,6 +855,8 @@ function sortRows(list){
     bv = SECTOR_SORT_ORDER[b[sortKey]] ?? 0;
     return dir * (av - bv);
   });
+  // modelos que não vão produzir sempre no fim da lista
+  arr.sort((a,b)=> (a.naoProduz?1:0) - (b.naoProduz?1:0));
   return arr;
 }
 
@@ -759,8 +895,9 @@ function buildHeaderRow(){
 function buildSectorStrip(){
   const strip = document.getElementById('sectorStrip');
   strip.innerHTML = '';
+  const ativos = activeRows();
   SECTORS.forEach(s=>{
-    const count = rows.filter(r=>r[s]==='FALTA').length;
+    const count = ativos.filter(r=>r[s]==='FALTA').length;
     const chip = document.createElement('div');
     chip.className = 'sector-chip' + (sectorFilter===s ? ' active' : '');
     chip.innerHTML = `${SECTOR_LABELS[s]} <span class="n ${count===0?'zero':''}">${count}</span>`;
@@ -778,7 +915,9 @@ function normalizeText(s){
 
 function matchesFilters(row){
   if(searchTerm && !normalizeText(row.modelo).includes(normalizeText(searchTerm))) return false;
-  if(sectorFilter && row[sectorFilter] !== 'FALTA') return false;
+  if(statusFilter==='naoproduz') return !!row.naoProduz;
+  if(row.naoProduz && statusFilter!=='todos') return false;
+  if(sectorFilter && (row.naoProduz || row[sectorFilter] !== 'FALTA')) return false;
   const st = computeStatus(row);
   if(statusFilter==='pendente' && st!=='PENDENTE') return false;
   if(statusFilter==='ok' && st!=='OK') return false;
@@ -811,7 +950,8 @@ function buildBody(){
   visible.forEach(row=>{
     const tr = document.createElement('tr');
 
-    if(row.prioridade) tr.classList.add('priority-row');
+    if(row.prioridade && !row.naoProduz) tr.classList.add('priority-row');
+    if(row.naoProduz) tr.classList.add('noprod-row');
 
     const tdModelo = document.createElement('td');
     tdModelo.className = 'modelo-cell';
@@ -828,6 +968,23 @@ function buildBody(){
       row.prioridade = !row.prioridade;
       persistRowsLocalCache();
       renderRows();
+      syncPrioridade(row);
+    });
+
+    const noprodBtn = document.createElement('button');
+    noprodBtn.type = 'button';
+    noprodBtn.className = 'noprod-btn' + (row.naoProduz ? ' active' : '');
+    noprodBtn.innerHTML = NOPROD_ICON;
+    noprodBtn.title = row.naoProduz ? 'Voltar a produzir esse modelo' : 'Marcar como "não vai produzir"';
+    noprodBtn.addEventListener('click', ()=>{
+      if(!requireAdmin()) return;
+      if(!row.naoProduz && !confirm(`Marcar "${row.modelo}" como NÃO VAI PRODUZIR?\n\nEle sai dos indicadores, do ranking de setores e da análise.`)) return;
+      row.naoProduz = !row.naoProduz;
+      if(row.naoProduz) row.prioridade = false;
+      persistRowsLocalCache();
+      renderRows();
+      syncNaoProduz(row);
+      if(!row.naoProduz) return;
       syncPrioridade(row);
     });
 
@@ -874,6 +1031,7 @@ function buildBody(){
     });
 
     flex.appendChild(priorityBtn);
+    flex.appendChild(noprodBtn);
     flex.appendChild(nameSpan);
     flex.appendChild(editBtn);
     tdModelo.appendChild(flex);
@@ -908,7 +1066,11 @@ function buildBody(){
     const tdStatus = document.createElement('td');
     tdStatus.className = 'status-cell';
     const st = computeStatus(row);
-    tdStatus.innerHTML = `<span class="${st==='OK'?'status-ok':'status-pend'}">${st}</span>`;
+    if(row.naoProduz){
+      tdStatus.innerHTML = '<span class="status-noprod">NÃO PRODUZ</span>';
+    } else {
+      tdStatus.innerHTML = `<span class="${st==='OK'?'status-ok':'status-pend'}">${st}</span>`;
+    }
     tr.appendChild(tdStatus);
 
     const tdPct = document.createElement('td');
@@ -921,7 +1083,7 @@ function buildBody(){
     tdConf.className = 'conf-cell';
     const confBtn = document.createElement('button');
     confBtn.type = 'button';
-    const unlocked = isConferenciaUnlocked(row);
+    const unlocked = isConferenciaUnlocked(row) && !row.naoProduz;
     const confDone = row.conferencia === 'OK';
     confBtn.className = 'cell-btn conf-btn ' + (!unlocked ? 'CONF_LOCKED' : (confDone ? 'CONF_OK' : 'CONF_PENDENTE'));
     confBtn.textContent = !unlocked ? '🔒' : (confDone ? 'CONFERIDO' : 'CONFERIR');
@@ -982,6 +1144,7 @@ function buildBody(){
 // Gráfico de barras simples em SVG (sem bibliotecas externas) mostrando quantos
 // modelos foram conferidos/finalizados em cada dia, com base em dataFinalizacaoTs.
 function buildProntosPorDiaChart(){
+  const rows = activeRows();
   const host = document.getElementById('prontosPorDiaChart');
   const conferidos = rows.filter(r => r.conferencia === 'OK' && r.dataFinalizacaoTs);
 
@@ -1028,18 +1191,21 @@ function buildProntosPorDiaChart(){
 }
 
 function buildSummary(){
-  document.getElementById('cTotal').textContent = rows.length;
-  const pend = rows.filter(r=>computeStatus(r)==='PENDENTE').length;
+  const ativos = activeRows();
+  document.getElementById('cTotal').textContent = ativos.length;
+  const pend = ativos.filter(r=>computeStatus(r)==='PENDENTE').length;
   document.getElementById('cPend').textContent = pend;
-  document.getElementById('cOk').textContent = rows.length - pend;
+  document.getElementById('cOk').textContent = ativos.length - pend;
   let faltaTotal = 0;
-  rows.forEach(r=> SECTORS.forEach(s=>{ if(r[s]==='FALTA') faltaTotal++; }));
+  ativos.forEach(r=> SECTORS.forEach(s=>{ if(r[s]==='FALTA') faltaTotal++; }));
   document.getElementById('cFaltaTotal').textContent = faltaTotal;
-  document.getElementById('cPrioridade').textContent = rows.filter(r=>r.prioridade).length;
+  document.getElementById('cPrioridade').textContent = ativos.filter(r=>r.prioridade).length;
+  document.getElementById('cNaoProduz').textContent = rows.filter(r=>r.naoProduz).length;
 }
 
 /* ---------------- ANÁLISE: render ---------------- */
 function buildAnalise(){
+  const rows = activeRows();
   buildProntosPorDiaChart();
 
   // embalagem à frente dos outros setores — só entra quem tem pendência real atrás
@@ -1261,32 +1427,39 @@ function openInfoModal(cardType){
   const byName = (a,b)=> a.modelo.localeCompare(b.modelo, 'pt-BR');
   let title = '', sub = '', list = [], lineFn;
 
+  const ativos = activeRows();
+
   if(cardType === 'total'){
-    title = 'Todos os modelos';
-    list = rows.slice().sort(byName);
+    title = 'Modelos em produção';
+    list = ativos.slice().sort(byName);
     sub = `${list.length} modelo${list.length!==1?'s':''} cadastrado${list.length!==1?'s':''} no total.`;
     lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${computeStatus(r)==='OK'?'pronto':'pendente'}</span>`;
   } else if(cardType === 'pendente'){
     title = 'Modelos pendentes';
-    list = rows.filter(r=>computeStatus(r)==='PENDENTE').sort(byName);
+    list = ativos.filter(r=>computeStatus(r)==='PENDENTE').sort(byName);
     sub = `${list.length} modelo${list.length!==1?'s':''} com pelo menos um setor pendente.`;
     lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${pendingSectorsOf(r).map(s=>SECTOR_LABELS[s]).join(', ') || '—'}</span>`;
   } else if(cardType === 'ok'){
     title = 'Modelos prontos';
-    list = rows.filter(r=>computeStatus(r)==='OK').sort(byName);
+    list = ativos.filter(r=>computeStatus(r)==='OK').sort(byName);
     sub = `${list.length} modelo${list.length!==1?'s':''} com tudo lançado ou não aplicável.`;
     lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${r.conferencia==='OK'?'conferido':'aguardando conferência'}</span>`;
   } else if(cardType === 'falta'){
     title = 'Faltas em aberto';
-    list = rows.filter(r=>SECTORS.some(s=>r[s]==='FALTA')).sort(byName);
-    const faltaTotal = rows.reduce((acc,r)=> acc + SECTORS.filter(s=>r[s]==='FALTA').length, 0);
+    list = ativos.filter(r=>SECTORS.some(s=>r[s]==='FALTA')).sort(byName);
+    const faltaTotal = ativos.reduce((acc,r)=> acc + SECTORS.filter(s=>r[s]==='FALTA').length, 0);
     sub = `${faltaTotal} falta${faltaTotal!==1?'s':''} espalhada${faltaTotal!==1?'s':''} em ${list.length} modelo${list.length!==1?'s':''}.`;
     lineFn = r => `<b>${r.prioridade?'★ ':''}${r.modelo}</b><span>${SECTORS.filter(s=>r[s]==='FALTA').map(s=>SECTOR_LABELS[s]).join(', ')}</span>`;
   } else if(cardType === 'prioridade'){
     title = '★ Prioridades';
-    list = rows.filter(r=>r.prioridade).sort(byName);
+    list = ativos.filter(r=>r.prioridade).sort(byName);
     sub = `${list.length} modelo${list.length!==1?'s':''} marcado${list.length!==1?'s':''} como prioridade.`;
     lineFn = r => `<b>${r.modelo}</b><span>${computeStatus(r)==='OK'?'pronto':'pendente'}</span>`;
+  } else if(cardType === 'naoproduz'){
+    title = 'Não vai produzir';
+    list = rows.filter(r=>r.naoProduz).sort(byName);
+    sub = `${list.length} modelo${list.length!==1?'s':''} fora da produção — não entra${list.length!==1?'m':''} em nenhum indicador.`;
+    lineFn = r => `<b style="text-decoration:line-through;">${r.modelo}</b><span>fora da produção</span>`;
   } else {
     return;
   }
@@ -1335,7 +1508,7 @@ document.getElementById('adminConfirmBtn').addEventListener('click', tryAdminCod
 document.getElementById('adminCancelBtn').addEventListener('click', closeAdminModal);
 document.getElementById('adminCodeInput').addEventListener('keydown', (ev)=>{
   if(ev.key === 'Enter') tryAdminCode();
-  if(ev.key === 'Escape'){ closeAdminModal(); closeInfoModal(); }
+  if(ev.key === 'Escape'){ closeAdminModal(); closeInfoModal(); closePrintModal(); }
 });
 document.getElementById('adminModalOverlay').addEventListener('click', (ev)=>{
   if(ev.target.id === 'adminModalOverlay') closeAdminModal();
@@ -1374,7 +1547,7 @@ document.getElementById('addRow').addEventListener('click', async ()=>{
     showToast('Modelo adicionado na planilha');
   }catch(err){
     console.error(err);
-    const newRow = {id: nextId++, modelo: name, prioridade: false};
+    const newRow = {id: nextId++, modelo: name, prioridade: false, naoProduz: false};
     SECTORS.forEach(s=> newRow[s] = '');
     rows.unshift(newRow);
     persistRowsLocalCache();
@@ -1405,10 +1578,10 @@ document.getElementById('refreshData').addEventListener('click', async ()=>{
 });
 
 document.getElementById('exportCsv').addEventListener('click', ()=>{
-  const header = ['MODELO', ...SECTORS.map(s=>SECTOR_LABELS[s]), 'STATUS', '% CONCLUÍDO', 'CONFERÊNCIA', 'DATA FINALIZAÇÃO'];
+  const header = ['MODELO', ...SECTORS.map(s=>SECTOR_LABELS[s]), 'STATUS', '% CONCLUÍDO', 'CONFERÊNCIA', 'DATA FINALIZAÇÃO', 'NÃO VAI PRODUZIR'];
   const lines = [header.join(';')];
   rows.forEach(r=>{
-    const line = [r.modelo, ...SECTORS.map(s=>STATE_LABEL[r[s]]||''), computeStatus(r), computePct(r)+'%', r.conferencia==='OK' ? 'CONFERIDO' : '', r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : ''];
+    const line = [r.modelo, ...SECTORS.map(s=>STATE_LABEL[r[s]]||''), r.naoProduz ? 'NÃO PRODUZ' : computeStatus(r), computePct(r)+'%', r.conferencia==='OK' ? 'CONFERIDO' : '', r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : '', r.naoProduz ? 'SIM' : ''];
     lines.push(line.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
   });
   const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
@@ -1421,21 +1594,136 @@ document.getElementById('exportCsv').addEventListener('click', ()=>{
   showToast('CSV exportado');
 });
 
-/* ---------------- EXPORTAR PDF (via impressao do navegador) ---------------- */
+/* ---------------- IMPRIMIR / PDF (via impressao do navegador) ---------------- */
 const PDF_STATE_CLASS = {'':'e','FALTA':'f','LANCAR':'l','LANCADO':'o','NAO_PASSA':'n'};
 const PDF_STATE_LABEL = {'':'\u2014','FALTA':'FALTA','LANCAR':'LAN\u00c7AR','LANCADO':'OK','NAO_PASSA':'N/P'};
+
+const EXTRA_COLS = [
+  {key:'status', label:'Status'},
+  {key:'pct',    label:'% concl\u00fa\u00eddo'},
+  {key:'conf',   label:'Confer\u00eancia'},
+  {key:'final',  label:'Finaliza\u00e7\u00e3o'}
+];
+const SCOPE_OPTS = [
+  {key:'filtro', label:'Do filtro da tela'},
+  {key:'pend',   label:'S\u00f3 com pend\u00eancia nos setores escolhidos'},
+  {key:'falta',  label:'S\u00f3 com FALTA nos setores escolhidos'}
+];
+const SIZE_OPTS   = [{key:1,label:'Normal'},{key:2,label:'Grande'},{key:3,label:'Enorme'}];
+const ORIENT_OPTS = [{key:'auto',label:'Autom\u00e1tica'},{key:'retrato',label:'Retrato'},{key:'paisagem',label:'Paisagem'}];
+
+const printOpts = {
+  sectors: SECTORS.slice(),
+  extras: ['status','pct','conf','final'],
+  scope: 'filtro',
+  size: 2,
+  orient: 'auto'
+};
 
 function pdfEscape(v){
   return String(v == null ? '' : v)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ---- quais linhas entram na impressao ---- */
+function printRowsList(){
+  let list = rows.filter(matchesFilters);
+  const sel = printOpts.sectors;
+  if(sel.length && printOpts.scope === 'pend'){
+    list = list.filter(r => !r.naoProduz && sel.some(s => r[s]==='FALTA' || r[s]==='LANCAR'));
+  } else if(sel.length && printOpts.scope === 'falta'){
+    list = list.filter(r => !r.naoProduz && sel.some(s => r[s]==='FALTA'));
+  }
+  return sortRows(list);
+}
+
+/* ---- montagem do modal ---- */
+function chipEl(label, on, onClick){
+  const d = document.createElement('div');
+  d.className = 'prt-chip' + (on ? ' on' : '');
+  d.textContent = label;
+  d.addEventListener('click', onClick);
+  return d;
+}
+
+function buildPrintModal(){
+  const secBox = document.getElementById('prtSectors');
+  secBox.innerHTML = '';
+  SECTORS.forEach(sct=>{
+    secBox.appendChild(chipEl(SECTOR_LABELS[sct], printOpts.sectors.includes(sct), ()=>{
+      const i = printOpts.sectors.indexOf(sct);
+      if(i >= 0) printOpts.sectors.splice(i,1); else printOpts.sectors.push(sct);
+      printOpts.sectors.sort((a,b)=> SECTORS.indexOf(a) - SECTORS.indexOf(b));
+      buildPrintModal();
+    }));
+  });
+
+  const exBox = document.getElementById('prtExtras');
+  exBox.innerHTML = '';
+  EXTRA_COLS.forEach(c=>{
+    exBox.appendChild(chipEl(c.label, printOpts.extras.includes(c.key), ()=>{
+      const i = printOpts.extras.indexOf(c.key);
+      if(i >= 0) printOpts.extras.splice(i,1); else printOpts.extras.push(c.key);
+      buildPrintModal();
+    }));
+  });
+
+  const scBox = document.getElementById('prtScope');
+  scBox.innerHTML = '';
+  SCOPE_OPTS.forEach(o=>{
+    scBox.appendChild(chipEl(o.label, printOpts.scope === o.key, ()=>{
+      printOpts.scope = o.key; buildPrintModal();
+    }));
+  });
+
+  const szBox = document.getElementById('prtSize');
+  szBox.innerHTML = '';
+  SIZE_OPTS.forEach(o=>{
+    szBox.appendChild(chipEl(o.label, printOpts.size === o.key, ()=>{
+      printOpts.size = o.key; buildPrintModal();
+    }));
+  });
+
+  const orBox = document.getElementById('prtOrient');
+  orBox.innerHTML = '';
+  ORIENT_OPTS.forEach(o=>{
+    orBox.appendChild(chipEl(o.label, printOpts.orient === o.key, ()=>{
+      printOpts.orient = o.key; buildPrintModal();
+    }));
+  });
+
+  const n = printRowsList().length;
+  const cols = 1 + printOpts.sectors.length + printOpts.extras.length;
+  document.getElementById('prtCount').innerHTML =
+    `Vai sair <b>${n}</b> modelo${n!==1?'s':''} em <b>${cols}</b> coluna${cols!==1?'s':''} \u00b7 folha <b>${printOrientation()}</b>.`;
+}
+
+function printOrientation(){
+  if(printOpts.orient !== 'auto') return printOpts.orient;
+  const cols = 1 + printOpts.sectors.length + printOpts.extras.length;
+  return cols > 6 ? 'paisagem' : 'retrato';
+}
+
+function applyPageStyle(){
+  let tag = document.getElementById('pdfPageStyle');
+  if(!tag){
+    tag = document.createElement('style');
+    tag.id = 'pdfPageStyle';
+    document.head.appendChild(tag);
+  }
+  const land = printOrientation() === 'paisagem';
+  tag.textContent = '@media print{@page{size:A4 ' + (land ? 'landscape' : 'portrait') + ';margin:' + (land ? '9mm' : '11mm') + ';}}';
+}
+
+/* ---- monta a area que vai pro papel ---- */
 function buildPdfArea(){
-  const visible = sortRows(rows.filter(matchesFilters));
-  const total = visible.length;
-  const okCount = visible.filter(r=>computeStatus(r)==='OK').length;
-  const confCount = visible.filter(r=>r.conferencia==='OK').length;
-  const media = total ? Math.round(visible.reduce((a,r)=>a+computePct(r),0)/total) : 0;
+  const secs = printOpts.sectors;
+  const extras = printOpts.extras;
+  const visible = printRowsList();
+  const visAtivos = visible.filter(r=>!r.naoProduz);
+  const noProdCount = visible.length - visAtivos.length;
+  const total = visAtivos.length;
+  const colCount = 1 + secs.length + extras.length;
 
   const filtros = [];
   if(searchTerm) filtros.push('busca "'+searchTerm+'"');
@@ -1443,6 +1731,9 @@ function buildPdfArea(){
   if(statusFilter==='pendente') filtros.push('somente pendentes');
   if(statusFilter==='ok') filtros.push('somente prontos');
   if(statusFilter==='prioridade') filtros.push('somente prioridades');
+  if(statusFilter==='naoproduz') filtros.push('somente os que n\u00e3o v\u00e3o produzir');
+  if(printOpts.scope==='pend') filtros.push('s\u00f3 com pend\u00eancia nos setores impressos');
+  if(printOpts.scope==='falta') filtros.push('s\u00f3 com FALTA nos setores impressos');
   const filtroTxt = filtros.length ? 'Filtros: '+filtros.join(' \u00b7 ') : 'Todos os modelos (sem filtro)';
 
   const agora = new Date();
@@ -1450,42 +1741,77 @@ function buildPdfArea(){
 
   const star = '<svg class="pdf-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2.6 15 9 22 9.9 17 14.7 18.2 21.6 12 18.3 5.8 21.6 7 14.7 2 9.9 9 9"/></svg>';
 
-  const kpis = [
-    ['Modelos', total],
-    ['Prontos', okCount],
-    ['Pendentes', total-okCount],
-    ['Conferidos', confCount],
-    ['M\u00e9dia concl.', media+'%']
-  ];
+  /* subtitulo: quando imprime poucos setores, deixa claro qual e */
+  let escopoTxt = '';
+  if(secs.length && secs.length <= 3 && secs.length < SECTORS.length){
+    escopoTxt = ' \u2014 ' + secs.map(s=>SECTOR_LABELS[s]).join(' / ');
+    if(printOpts.scope==='pend') escopoTxt += ' (pend\u00eancias)';
+    if(printOpts.scope==='falta') escopoTxt += ' (faltas)';
+  }
+
+  /* KPIs adaptativos */
+  let kpis;
+  if(printOpts.scope !== 'filtro' && secs.length && secs.length <= 3){
+    kpis = [['Modelos na lista', total]];
+    secs.forEach(sct=>{
+      kpis.push([SECTOR_LABELS[sct]+' falta',  visAtivos.filter(r=>r[sct]==='FALTA').length]);
+      kpis.push([SECTOR_LABELS[sct]+' lan\u00e7ar', visAtivos.filter(r=>r[sct]==='LANCAR').length]);
+    });
+  } else {
+    const okCount = visAtivos.filter(r=>computeStatus(r)==='OK').length;
+    const confCount = visAtivos.filter(r=>r.conferencia==='OK').length;
+    const media = total ? Math.round(visAtivos.reduce((a,r)=>a+computePct(r),0)/total) : 0;
+    kpis = [
+      ['Modelos', total],
+      ['Prontos', okCount],
+      ['Pendentes', total-okCount],
+      ['Conferidos', confCount],
+      ['M\u00e9dia concl.', media+'%']
+    ];
+    if(noProdCount) kpis.push(['N\u00e3o produz', noProdCount]);
+  }
+
+  const modeloW = colCount <= 2 ? 72 : colCount <= 4 ? 48 : colCount <= 6 ? 34 : 19;
 
   let h = '';
   h += '<div class="pdf-head">';
   h +=   '<div class="pdf-eyebrow">Aluminas M\u00f3veis \u00b7 PCP</div>';
-  h +=   '<div class="pdf-title">Controle de Produ\u00e7\u00e3o \u2014 Feira</div>';
+  h +=   '<div class="pdf-title">Controle de Produ\u00e7\u00e3o \u2014 Feira'+pdfEscape(escopoTxt)+'</div>';
   h +=   '<div class="pdf-meta">Gerado em '+carimbo+' \u00b7 '+pdfEscape(filtroTxt)+'</div>';
   h += '</div>';
 
   h += '<div class="pdf-kpis">'+kpis.map(k=>'<div class="pdf-kpi"><span class="k">'+k[0]+'</span><span class="v">'+k[1]+'</span></div>').join('')+'</div>';
 
-  h += '<table class="pdf-table"><thead><tr><th class="modelo">Modelo</th>';
-  SECTORS.forEach(s=>{ h += '<th>'+pdfEscape(SECTOR_LABELS[s])+'</th>'; });
-  h += '<th>Status</th><th>%</th><th>Conf.</th><th>Finaliza\u00e7\u00e3o</th></tr></thead><tbody>';
+  h += '<table class="pdf-table"><thead><tr><th class="modelo" style="width:'+modeloW+'%;">Modelo</th>';
+  secs.forEach(sct=>{ h += '<th>'+pdfEscape(SECTOR_LABELS[sct])+'</th>'; });
+  if(extras.includes('status')) h += '<th>Status</th>';
+  if(extras.includes('pct'))    h += '<th>%</th>';
+  if(extras.includes('conf'))   h += '<th>Conf.</th>';
+  if(extras.includes('final'))  h += '<th>Finaliza\u00e7\u00e3o</th>';
+  h += '</tr></thead><tbody>';
 
-  if(total === 0){
-    h += '<tr><td class="pdf-empty" colspan="'+(SECTORS.length+5)+'">Nenhum modelo dentro do filtro atual.</td></tr>';
+  if(visible.length === 0){
+    h += '<tr><td class="pdf-empty" colspan="'+colCount+'">Nenhum modelo dentro do filtro atual.</td></tr>';
   } else {
     visible.forEach(r=>{
       const st = computeStatus(r);
-      h += '<tr>';
-      h += '<td class="modelo">'+(r.prioridade ? star : '')+pdfEscape(r.modelo)+'</td>';
-      SECTORS.forEach(s=>{
-        const v = r[s] || '';
+      h += r.naoProduz ? '<tr class="pdf-noprod">' : '<tr>';
+      h += '<td class="modelo" style="width:'+modeloW+'%;">'+(r.prioridade && !r.naoProduz ? star : '')+pdfEscape(r.modelo)+'</td>';
+      secs.forEach(sct=>{
+        const v = r[sct] || '';
         h += '<td class="st '+PDF_STATE_CLASS[v]+'">'+PDF_STATE_LABEL[v]+'</td>';
       });
-      h += '<td class="st '+(st==='OK'?'o':'l')+'">'+st+'</td>';
-      h += '<td class="pct">'+computePct(r)+'%</td>';
-      h += '<td>'+(r.conferencia==='OK' ? 'OK' : '\u2014')+'</td>';
-      h += '<td>'+(r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : '\u2014')+'</td>';
+      if(r.naoProduz){
+        if(extras.includes('status')) h += '<td class="st n">N\u00c3O PROD.</td>';
+        if(extras.includes('pct'))    h += '<td class="pct">\u2014</td>';
+        if(extras.includes('conf'))   h += '<td>\u2014</td>';
+        if(extras.includes('final'))  h += '<td>\u2014</td>';
+      } else {
+        if(extras.includes('status')) h += '<td class="st '+(st==='OK'?'o':'l')+'">'+st+'</td>';
+        if(extras.includes('pct'))    h += '<td class="pct">'+computePct(r)+'%</td>';
+        if(extras.includes('conf'))   h += '<td>'+(r.conferencia==='OK' ? 'OK' : '\u2014')+'</td>';
+        if(extras.includes('final'))  h += '<td>'+(r.dataFinalizacaoTs ? formatDatePtBR(r.dataFinalizacaoTs) : '\u2014')+'</td>';
+      }
       h += '</tr>';
     });
   }
@@ -1497,13 +1823,16 @@ function buildPdfArea(){
     +  '<span class="lg o">OK</span>'
     +  '<span class="lg n">N/P</span>'
     +  '<span class="lg e">\u2014</span>'
-    +  '<span class="note">N/P = n\u00e3o passa pelo setor \u00b7 \u2014 = sem dado \u00b7 % desconsidera setores marcados como n\u00e3o passa</span>'
+    +  '<span class="note">N/P = n\u00e3o passa pelo setor \u00b7 \u2014 = sem dado \u00b7 linha riscada = modelo que n\u00e3o vai produzir</span>'
     +  '</div>';
 
-  document.getElementById('pdfArea').innerHTML = h;
+  const area = document.getElementById('pdfArea');
+  area.className = 'sz-' + printOpts.size;
+  area.innerHTML = h;
 }
 
-document.getElementById('exportPdf').addEventListener('click', ()=>{
+function doPrint(){
+  applyPageStyle();
   buildPdfArea();
   let done = false;
   const cleanup = ()=>{
@@ -1519,6 +1848,32 @@ document.getElementById('exportPdf').addEventListener('click', ()=>{
     window.print();
     setTimeout(cleanup, 800);
   }, 120);
+}
+
+function openPrintModal(){
+  buildPrintModal();
+  document.getElementById('printModalOverlay').classList.add('show');
+}
+function closePrintModal(){
+  document.getElementById('printModalOverlay').classList.remove('show');
+}
+
+document.getElementById('exportPdf').addEventListener('click', openPrintModal);
+document.getElementById('printCancelBtn').addEventListener('click', closePrintModal);
+document.getElementById('printConfirmBtn').addEventListener('click', ()=>{
+  closePrintModal();
+  setTimeout(doPrint, 150);
+});
+document.getElementById('printModalOverlay').addEventListener('click', (ev)=>{
+  if(ev.target.id === 'printModalOverlay') closePrintModal();
+});
+document.getElementById('prtAllSectors').addEventListener('click', ()=>{
+  printOpts.sectors = SECTORS.slice();
+  buildPrintModal();
+});
+document.getElementById('prtNoSectors').addEventListener('click', ()=>{
+  printOpts.sectors = [];
+  buildPrintModal();
 });
 
 (async function init(){
